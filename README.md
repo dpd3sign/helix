@@ -53,4 +53,10 @@ supabase db execute -f supabase/seed/helix_recipes.sql
 - Builds & distribution: Use EAS for iOS/Android deployment. Apple Developer enrollment is pending (target January), so focus on local simulator validation until accounts are active.
 - Secrets: Never commit `.env` with real keys. Share environment values through secure channels only.
 
+## Continuous Integration
+
+[![HELIX CI](https://github.com/helix-app/helix/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/helix-app/helix/actions/workflows/ci.yml)
+
+The CI pipeline runs Deno fmt/lint plus the core test suites. Tests automatically skip integration steps when Supabase secrets are absent. To exercise the full integration flow, add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as repository secrets.
+
 For questions or new contributors, point them to the documentation above and the HELIX Slack/Notion spaces (if applicable) for broader context. Apply the HELIX Design Rules to every UI change to maintain a consistent experience.

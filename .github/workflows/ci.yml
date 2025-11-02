@@ -1,0 +1,70 @@
+name: HELIX CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        id: deno-setup
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: vlatest
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/deno
+          key: deno-${{ runner.os }}-${{ steps.deno-setup.outputs.deno-version }}-${{ hashFiles('**/deno.lock', 'deno.json', 'deno.jsonc') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - name: Format check
+        run: deno fmt --check
+
+      - name: Lint
+        run: deno lint
+
+  test:
+    runs-on: ubuntu-latest
+    needs: validate
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        id: deno-setup
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: vlatest
+
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/deno
+          key: deno-${{ runner.os }}-${{ steps.deno-setup.outputs.deno-version }}-${{ hashFiles('**/deno.lock', 'deno.json', 'deno.jsonc') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
+
+      - name: Run Deno tests
+        run: |
+          deno test -A \
+            supabase/functions/generate_weekly_plan/generate_weekly_plan.test.ts \
+            supabase/functions/jobs/jobs.test.ts \
+            supabase/functions/utilities/utilities.test.ts \
+            supabase/functions/wearables-import-mock/wearables-import-mock.test.ts
