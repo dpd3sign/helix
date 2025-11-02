@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { syncHealthKitDailyMetrics } from '@/lib/healthkit';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -61,9 +62,37 @@ export default function WearableSyncScreen() {
     }
   }, [session?.user]);
 
+  const handleAppleHealthSync = async () => {
+    if (!session?.user) {
+      Alert.alert('Login required', 'Sign in before syncing Apple Health data.');
+      return;
+    }
+
+    try {
+      setInvokingProvider('apple_health');
+      const { inserted } = await syncHealthKitDailyMetrics();
+      Alert.alert(
+        'Apple Health Synced',
+        inserted > 0
+          ? `Imported ${inserted} day${inserted === 1 ? '' : 's'} of metrics.`
+          : 'No new metrics were available today.'
+      );
+    } catch (error) {
+      Alert.alert('Apple Health', (error as Error).message);
+    } finally {
+      setInvokingProvider(null);
+      fetchConnections();
+    }
+  };
+
   const handleConnect = async (provider: Provider) => {
     if (!session?.user) {
       Alert.alert('Login required', 'Sign in before connecting a wearable.');
+      return;
+    }
+
+    if (provider === 'apple_health') {
+      await handleAppleHealthSync();
       return;
     }
 
@@ -86,6 +115,12 @@ export default function WearableSyncScreen() {
 
   const handleSyncNow = async (provider: Provider) => {
     if (!session?.user) return;
+
+    if (provider === 'apple_health') {
+      await handleAppleHealthSync();
+      return;
+    }
+
     try {
       setInvokingProvider(provider);
       const { error } = await supabase.functions.invoke('sync-wearables', {
@@ -115,6 +150,7 @@ export default function WearableSyncScreen() {
         {providers.map((provider) => {
           const info = connectionFor(provider);
           const isLoading = invokingProvider === provider;
+          const isApple = provider === 'apple_health';
           return (
             <View key={provider} style={styles.providerRow}>
               <View style={{ flex: 1 }}>
@@ -126,24 +162,40 @@ export default function WearableSyncScreen() {
                   <ThemedText style={styles.status}>Last sync: {new Date(info.synced_at).toLocaleString()}</ThemedText>
                 )}
               </View>
-              <Pressable
-                style={styles.linkButton}
-                onPress={() => handleConnect(provider)}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#1F6FEB" />
-                ) : (
-                  <ThemedText style={styles.linkText}>{info ? 'Reconnect' : 'Connect'}</ThemedText>
-                )}
-              </Pressable>
-              <Pressable
-                style={styles.syncButton}
-                onPress={() => handleSyncNow(provider)}
-                disabled={isLoading}
-              >
-                <ThemedText style={styles.syncText}>Sync</ThemedText>
-              </Pressable>
+              {isApple ? (
+                <Pressable
+                  style={styles.appleButton}
+                  onPress={handleAppleHealthSync}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <ThemedText style={styles.appleText}>Sync Apple Health</ThemedText>
+                  )}
+                </Pressable>
+              ) : (
+                <>
+                  <Pressable
+                    style={styles.linkButton}
+                    onPress={() => handleConnect(provider)}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#1F6FEB" />
+                    ) : (
+                      <ThemedText style={styles.linkText}>{info ? 'Reconnect' : 'Connect'}</ThemedText>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    style={styles.syncButton}
+                    onPress={() => handleSyncNow(provider)}
+                    disabled={isLoading}
+                  >
+                    <ThemedText style={styles.syncText}>Sync</ThemedText>
+                  </Pressable>
+                </>
+              )}
             </View>
           );
         })}
@@ -196,6 +248,16 @@ const styles = StyleSheet.create({
   linkText: {
     fontWeight: '600',
     color: '#1F6FEB',
+  },
+  appleButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: '#111111',
+  },
+  appleText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   syncButton: {
     paddingHorizontal: 12,

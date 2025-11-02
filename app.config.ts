@@ -38,6 +38,20 @@ const baseConfig: ExpoConfig = {
         dark: { backgroundColor: '#000000' },
       },
     ],
+    [
+      'react-native-health',
+      {
+        permissions: {
+          read: [
+            'HeartRate',
+            'HeartRateVariabilitySDNN',
+            'SleepAnalysis',
+            'StepCount',
+          ],
+          write: [],
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
@@ -53,5 +67,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...(baseConfig.extra ?? {}),
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    eas: {
+      projectId: '163b6fcf-b81d-4efc-86ad-27494b1a435e',
+     },
   },
 });

@@ -1,50 +1,56 @@
-# Welcome to your Expo app 👋
+# HELIX Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+HELIX is a next-generation self-development ecosystem synchronizing mind, body, and identity. The mobile client is built with Expo (React Native + TypeScript) and powered by Supabase (Postgres, Auth, Edge Functions). This README points you to project setup steps and the canonical product documentation stored in the `docs/` directory.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Quick Start
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- Use the Expo CLI output to launch on an iOS simulator, Android emulator, development build, or Expo Go.
+- Environment variables are loaded from `.env`. Keep `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in sync with the Supabase project being used.
 
-## Learn more
+## Core Documentation
 
-To learn more about developing your project with Expo, look at the following resources:
+- `docs/helix-rulebook.md` – Design language, UX guardrails, coding standards, and workflow expectations (Apple Glass aesthetic, navigation, testing philosophy).
+- `docs/helix-system-overview.md` – Product vision, experience flow, key modules, and roadmap anchors.
+- `docs/helix-architecture.md` – Detailed modular architecture for onboarding, wearables, planning engine, meals, workouts, mindset, metrics, identity sync, and AI coach.
+- `docs/passdown-template.md` – Checklist for preparing handoffs between working sessions.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Read these files before building new features to ensure design and implementation stay aligned with the HELIX rulebook.
 
-## Join the community
+## Supabase Tooling
 
-Join our community of developers creating universal apps.
+```bash
+# run pending migrations
+supabase migration up
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# execute seeds
+supabase db execute -f supabase/seed/helix_exercises.sql
+supabase db execute -f supabase/seed/helix_recipes.sql
+```
+
+- Edge functions live under `supabase/functions`. Use `supabase functions serve generate_weekly_plan` for local testing when working on the Explainable Personalization Engine (EPE).
+- Review `supabase/functions/generate_weekly_plan/README.md` for payload examples and deployment notes.
+
+## Development Workflow
+
+1. Consult the rulebook and architecture docs for guidance on UX, navigation, and module responsibilities.
+2. Build features inside the `app`, `components`, `lib`, and `supabase` directories following the 8 px grid and Apple Glass aesthetic.
+3. Run tests and type checks before committing:
+   ```bash
+   npm run lint
+   npm run test
+   deno test supabase/functions/generate_weekly_plan
+   ```
+4. Document significant changes in the passdown template when handing off the project.
+
+## Additional Notes
+
+- Observability: The client integrates Sentry; Supabase logs and edge function tracing should be wired to the same monitoring plane.
+- Builds & distribution: Use EAS for iOS/Android deployment. Apple Developer enrollment is pending (target January), so focus on local simulator validation until accounts are active.
+- Secrets: Never commit `.env` with real keys. Share environment values through secure channels only.
+
+For questions or new contributors, point them to the documentation above and the HELIX Slack/Notion spaces (if applicable) for broader context. Apply the HELIX Design Rules to every UI change to maintain a consistent experience.

@@ -65,7 +65,7 @@ export const Colors = {
   },
   dark: {
     text: Palette.codGray[100],
-    background: Palette.codGray[950],
+    background: '#0B0B0B',    // <---- New global background color (Dark Mode)
     surface: Palette.codGray[900],
     navigation: Palette.codGray[900],
     borderMuted: Palette.codGray[800],

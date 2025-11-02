@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
+import { FloatingMenu } from '@/components/floating-menu';
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 
@@ -23,17 +24,9 @@ export default function TabLayout() {
         tabBarActiveTintColor: palette.tabIconSelected,
         tabBarInactiveTintColor: palette.tabIconDefault,
         tabBarButton: HapticTab,
+        headerRight: () => <FloatingMenu />,
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="speedometer-outline" size={size} color={color} />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="plan"
         options={{
@@ -49,6 +42,15 @@ export default function TabLayout() {
           title: 'Mindset',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="planet-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="speedometer-outline" size={size} color={color} />
           ),
         }}
       />

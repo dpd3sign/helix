@@ -48,6 +48,7 @@ export default function WelcomeScreen() {
             <ThemedText
               style={[styles.primaryLabel, { color: palette.buttonPrimaryText }]}
             >
+              
               Login
             </ThemedText>
           </Pressable>
@@ -89,22 +90,29 @@ const styles = StyleSheet.create({
   },
   logoBlock: {
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 144,
+    height: 144,
   },
   brand: {
-    fontSize: 46,
-    letterSpacing: 6,
+    marginTop: 0,        // fix: 'marginTop' is case sensitive
+    paddingTop: 24,
+    fontSize: 56,         // shorter / tighter height (was 56)
+    letterSpacing: 6,     // less stretching so it reads cleaner
+    fontWeight: '700',    // lighter weight (works on iOS out of the box)
+    opacity: 1,        // optional: slightyly lighter-looking ink
+    fontcolor: '#f6f6f6',
+
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 24,
+    fontcolor: '#f6f6f6',
     textAlign: 'center',
     fontStyle: 'italic',
-    opacity: 0.9,
     lineHeight: 26,
+    paddingBottom: 30,
   },
   actions: {
     width: '100%',

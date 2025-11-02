@@ -27,7 +27,9 @@ export default function InitialQuestionsScreen() {
   const [dateOfBirth, setDateOfBirth] = useState('1995-01-01');
   const [sex, setSex] = useState<'male' | 'female'>('male');
   const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
-  const [heightInput, setHeightInput] = useState('180');
+  const [heightCmInput, setHeightCmInput] = useState('180');
+  const [heightFeet, setHeightFeet] = useState('5');
+  const [heightInches, setHeightInches] = useState('11');
   const [weightInput, setWeightInput] = useState('82');
   const [activityLevel, setActivityLevel] = useState<'sedentary' | 'light' | 'moderate' | 'high'>('moderate');
   const [timezone, setTimezone] = useState(defaultTimezone);
@@ -42,26 +44,56 @@ export default function InitialQuestionsScreen() {
     return Number.isFinite(parsed) ? parsed : NaN;
   };
 
+  const handleUnitSystemChange = (nextUnit: 'metric' | 'imperial') => {
+    if (nextUnit === unitSystem) return;
+
+    if (nextUnit === 'imperial') {
+      const cm = parseNumber(heightCmInput);
+      if (!Number.isNaN(cm) && cm > 0) {
+        const totalInches = cm / 2.54;
+        const feet = Math.floor(totalInches / 12);
+        const inches = Math.round(totalInches - feet * 12);
+        setHeightFeet(String(feet));
+        setHeightInches(String(Math.min(inches, 11)));
+      }
+    } else {
+      const feetValue = parseNumber(heightFeet);
+      const inchesValue = parseNumber(heightInches);
+      if (!Number.isNaN(feetValue) && !Number.isNaN(inchesValue)) {
+        const cm = (feetValue * 12 + inchesValue) * 2.54;
+        setHeightCmInput(cm.toFixed(0));
+      }
+    }
+
+    setUnitSystem(nextUnit);
+  };
+
   const handleNext = () => {
-    const height = parseNumber(heightInput);
+    const heightMetric = unitSystem === 'metric' ? parseNumber(heightCmInput) : Number.NaN;
+    const feet = unitSystem === 'imperial' ? parseNumber(heightFeet) : Number.NaN;
+    const inches = unitSystem === 'imperial' ? parseNumber(heightInches) : Number.NaN;
     const weight = parseNumber(weightInput);
     const rhr = parseNumber(restingHeartRate);
     const baselineHrv = parseNumber(hrv);
     const sleep = parseNumber(sleepHours);
     const bf = parseNumber(bodyFat);
 
-    if ([height, weight, rhr, baselineHrv, sleep, bf].some(Number.isNaN)) {
+    const metricHeightValue =
+      unitSystem === 'metric'
+        ? heightMetric
+        : (feet * 12 + inches) * 2.54;
+
+    if ([metricHeightValue, weight, rhr, baselineHrv, sleep, bf].some(Number.isNaN)) {
       Alert.alert('Invalid input', 'Please ensure all numeric fields are valid.');
       return;
     }
 
-    const heightCm = unitSystem === 'metric' ? height : height * 2.54;
     const weightKg = unitSystem === 'metric' ? weight : weight / 2.20462;
 
     setProfile({
       dateOfBirth,
       sex,
-      heightCm,
+      heightCm: metricHeightValue,
       weightKg,
       unitSystem,
       activityLevel,
@@ -109,26 +141,47 @@ export default function InitialQuestionsScreen() {
             ))}
           </View>
           <View style={styles.chipRow}>
-            {(['metric', 'imperial'] as const).map(option => (
-              <Pressable
-                key={option}
-                onPress={() => setUnitSystem(option)}
-                style={[styles.chip, unitSystem === option && styles.chipActive]}
-              >
-                <ThemedText style={unitSystem === option ? styles.chipActiveLabel : styles.chipLabel}>
-                  {option.toUpperCase()}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </View>
-          <TextInput
-            style={styles.input}
-            placeholder={unitSystem === 'metric' ? 'Height (cm)' : 'Height (inches)'}
-            keyboardType="numeric"
-            value={heightInput}
-            onChangeText={setHeightInput}
-            placeholderTextColor="#7A8696"
-          />
+          {(['metric', 'imperial'] as const).map(option => (
+            <Pressable
+              key={option}
+              onPress={() => handleUnitSystemChange(option)}
+              style={[styles.chip, unitSystem === option && styles.chipActive]}
+            >
+              <ThemedText style={unitSystem === option ? styles.chipActiveLabel : styles.chipLabel}>
+                {option.toUpperCase()}
+              </ThemedText>
+            </Pressable>
+          ))}
+        </View>
+          {unitSystem === 'metric' ? (
+            <TextInput
+              style={styles.input}
+              placeholder="Height (cm)"
+              keyboardType="numeric"
+              value={heightCmInput}
+              onChangeText={setHeightCmInput}
+              placeholderTextColor="#7A8696"
+            />
+          ) : (
+            <View style={styles.row}>
+              <TextInput
+                style={[styles.input, styles.inputSplit]}
+                placeholder="ft"
+                keyboardType="numeric"
+                value={heightFeet}
+                onChangeText={setHeightFeet}
+                placeholderTextColor="#7A8696"
+              />
+              <TextInput
+                style={[styles.input, styles.inputSplit]}
+                placeholder="in"
+                keyboardType="numeric"
+                value={heightInches}
+                onChangeText={setHeightInches}
+                placeholderTextColor="#7A8696"
+              />
+            </View>
+          )}
           <TextInput
             style={styles.input}
             placeholder={unitSystem === 'metric' ? 'Weight (kg)' : 'Weight (lbs)'}
@@ -223,6 +276,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#111827',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  inputSplit: {
+    flex: 1,
   },
   chipRow: {
     flexDirection: 'row',
