@@ -1,63 +1,84 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+// constants/theme.ts
 
-import { Platform } from 'react-native';
-
-const tintColorLight = '#1F6FEB';
-const tintColorDark = '#58A6FF';
-
-export const Colors = {
-  light: {
-    text: '#0B1726',
-    background: '#F5F6F8',
-    navigation: '#FFFFFF',
-    surface: '#FFFFFF',
-    borderMuted: '#E1E6EF',
-    tint: tintColorLight,
-    icon: '#5C6470',
-    tabIconDefault: '#7A8696',
-    tabIconSelected: tintColorLight,
-    accent: '#0F7D7D',
-    caution: '#F97316',
+const Palette = {
+  white: '#ffffff',
+  offWhite: '#d9dbe1',
+  codGray: {
+    50: '#f6f6f6',
+    100: '#e7e7e7',
+    200: '#d1d1d1',
+    300: '#b0b0b0',
+    400: '#888888',
+    500: '#6d6d6d',
+    600: '#5d5d5d',
+    700: '#4f4f4f',
+    800: '#454545',
+    900: '#3d3d3d',
+    950: '#0e0e0e',
   },
-  dark: {
-    text: '#ECEFF5',
-    background: '#07090F',
-    navigation: '#0E121D',
-    surface: '#141927',
-    borderMuted: '#1E2534',
-    tint: tintColorDark,
-    icon: '#9BA9C0',
-    tabIconDefault: '#5F6B80',
-    tabIconSelected: tintColorDark,
-    accent: '#2CC7C8',
-    caution: '#FB923C',
+  trinidad: {
+    50: '#fef5ee',
+    100: '#fce9d8',
+    200: '#f8d0b0',
+    300: '#f3ae7e',
+    400: '#ee8249',
+    500: '#e85b1c',
+    600: '#da4a1c',
+    700: '#b53619',
+    800: '#902d1c',
+    900: '#752819',
+    950: '#3f110b',
+  },
+  skyBlue: {
+    50: '#ebfeff',
+    100: '#cdf9ff',
+    200: '#a1efff',
+    300: '#48ddff',
+    400: '#1acaf6',
+    500: '#00addc',
+    600: '#0188b9',
+    700: '#096d95',
+    800: '#115979',
+    900: '#134966',
+    950: '#063046',
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+export const Colors = {
+  light: {
+    text: Palette.codGray[900],
+    background: Palette.codGray[50],
+    surface: Palette.codGray[100],
+    navigation: Palette.codGray[50],
+    borderMuted: Palette.codGray[200],
+    tint: Palette.skyBlue[500],
+    tabIconDefault: Palette.codGray[400],
+    tabIconSelected: Palette.skyBlue[500],
+    accent: Palette.skyBlue[400],
+    danger: Palette.trinidad[500],
+    buttonPrimaryBackground: Palette.offWhite,
+    buttonPrimaryText: Palette.codGray[900],
+    buttonOutlineText: Palette.codGray[50],
+    inputBackground: 'rgba(15, 15, 15, 0.35)',
+    inputBorder: 'rgba(255, 255, 255, 0.18)',
+    overlay: 'rgba(14, 14, 14, 0.55)',
   },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
+  dark: {
+    text: Palette.codGray[100],
+    background: Palette.codGray[950],
+    surface: Palette.codGray[900],
+    navigation: Palette.codGray[900],
+    borderMuted: Palette.codGray[800],
+    tint: Palette.skyBlue[300],
+    tabIconDefault: Palette.codGray[500],
+    tabIconSelected: Palette.skyBlue[300],
+    accent: Palette.skyBlue[200],
+    danger: Palette.trinidad[400],
+    buttonPrimaryBackground: Palette.offWhite,
+    buttonPrimaryText: Palette.codGray[900],
+    buttonOutlineText: Palette.codGray[50],
+    inputBackground: 'rgba(15, 15, 15, 0.45)',
+    inputBorder: 'rgba(255, 255, 255, 0.18)',
+    overlay: 'rgba(14, 14, 14, 0.55)',
   },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+};

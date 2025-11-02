@@ -28,15 +28,17 @@ create index if not exists mv_body_overview_user_idx on mv_body_overview (user_i
 create materialized view if not exists mv_nutrition_compliance as
 with daily_intake as (
   select
-    mp.user_id,
+    wp.user_id,
     mp.date as day,
     mp.target_calories,
     mp.protein_g as protein_target,
     coalesce(sum(ml.logged_calories), 0) as calories_consumed,
     coalesce(sum(ml.protein_g), 0) as protein_consumed
   from meal_plans mp
-  left join meal_logs ml on mp.meal_plan_id = ml.meal_plan_id
-  group by mp.user_id, mp.date, mp.target_calories, mp.protein_g
+  join weekly_plans wp on mp.plan_id = wp.plan_id
+  left join meals m on m.meal_plan_id = mp.meal_plan_id
+  left join meal_logs ml on ml.meal_id = m.meal_id
+  group by wp.user_id, mp.date, mp.target_calories, mp.protein_g
 )
 select
   user_id,
@@ -45,7 +47,10 @@ select
   calories_consumed,
   protein_target,
   protein_consumed,
-  greatest(0, 100 - abs(coalesce(calories_consumed, 0) - coalesce(target_calories, 0)) / nullif(target_calories, 0) * 100) as compliance_score
+  greatest(
+    0,
+    100 - abs(coalesce(calories_consumed, 0) - coalesce(target_calories, 0)) / nullif(target_calories, 0) * 100
+  ) as compliance_score
 from daily_intake;
 
 create index if not exists mv_nutrition_compliance_user_idx on mv_nutrition_compliance (user_id, day desc);
@@ -118,7 +123,7 @@ left join latest_baseline lb on lb.user_id = wdm.user_id;
 
 create index if not exists mv_sleep_recovery_user_idx on mv_sleep_recovery (user_id, date desc);
 
--- Recommended refresh schedule:
+-- Recommended refresh cadence:
 --   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_body_overview;
 --   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_nutrition_compliance;
 --   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_mindset_confidence;

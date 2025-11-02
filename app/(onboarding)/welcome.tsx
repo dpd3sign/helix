@@ -1,19 +1,34 @@
 import { useRouter } from 'expo-router';
-import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Image,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  View,
+  useColorScheme,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Colors } from '@/constants/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const scheme = useColorScheme() ?? 'dark';
+  const palette = Colors[scheme];
 
   return (
     <ImageBackground
-      source={require('@/assets/images/android-icon-background.png')}
+      source={require('@/assets/images/Background1.2.jpg')}
       resizeMode="cover"
       style={styles.background}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: palette.overlay }]}>
         <View style={styles.logoBlock}>
+          <Image
+            source={require('@/assets/images/helix-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <ThemedText type="title" style={styles.brand}>
             HELIX
           </ThemedText>
@@ -23,11 +38,34 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Pressable style={styles.primaryButton} onPress={() => router.push('/(onboarding)/login')}>
-            <ThemedText style={styles.primaryLabel}>Login</ThemedText>
+          <Pressable
+            style={[
+              styles.primaryButton,
+              { backgroundColor: palette.buttonPrimaryBackground },
+            ]}
+            onPress={() => router.push('/(onboarding)/login')}
+          >
+            <ThemedText
+              style={[styles.primaryLabel, { color: palette.buttonPrimaryText }]}
+            >
+              Login
+            </ThemedText>
           </Pressable>
-          <Pressable style={styles.secondaryButton} onPress={() => router.push('/(onboarding)/account')}>
-            <ThemedText style={styles.secondaryLabel}>Sign Up</ThemedText>
+          <Pressable
+            style={[
+              styles.secondaryButton,
+              { borderColor: palette.buttonPrimaryBackground },
+            ]}
+            onPress={() => router.push('/(onboarding)/account')}
+          >
+            <ThemedText
+              style={[
+                styles.secondaryLabel,
+                { color: palette.buttonOutlineText },
+              ]}
+            >
+              Sign Up
+            </ThemedText>
           </Pressable>
         </View>
 
@@ -43,55 +81,60 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 32,
+    paddingHorizontal: 32,
+    paddingVertical: 48,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 40,
   },
   logoBlock: {
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
+  },
+  logo: {
+    width: 80,
+    height: 80,
   },
   brand: {
-    fontSize: 42,
-    letterSpacing: 4,
+    fontSize: 46,
+    letterSpacing: 6,
   },
   tagline: {
     fontSize: 18,
     textAlign: 'center',
     fontStyle: 'italic',
-    opacity: 0.85,
+    opacity: 0.9,
+    lineHeight: 26,
   },
   actions: {
     width: '100%',
-    gap: 16,
+    gap: 18,
   },
   primaryButton: {
-    backgroundColor: '#D9DBE1',
     paddingVertical: 16,
-    borderRadius: 18,
+    borderRadius: 22,
     alignItems: 'center',
   },
   primaryLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111114',
+    letterSpacing: 1,
   },
   secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#D9DBE1',
+    borderWidth: 1.5,
     paddingVertical: 16,
-    borderRadius: 18,
+    borderRadius: 22,
     alignItems: 'center',
   },
   secondaryLabel: {
     fontSize: 18,
     fontWeight: '600',
+    letterSpacing: 1,
   },
   footer: {
     marginTop: 'auto',
     fontSize: 12,
     opacity: 0.65,
+    letterSpacing: 1,
   },
 });

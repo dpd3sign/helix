@@ -1,13 +1,24 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+  useColorScheme,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const scheme = useColorScheme() ?? 'dark';
+  const palette = Colors[scheme];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,62 +44,124 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="subtitle">Login</ThemedText>
-      <ThemedText style={styles.copy}>
-        Enter your credentials to continue your HELIX journey.
-      </ThemedText>
+    <ImageBackground
+      source={require('@/assets/images/Background1.2.jpg')}
+      resizeMode="cover"
+      style={styles.background}
+    >
+      <View style={[styles.overlay, { backgroundColor: palette.overlay }]}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.title}>
+            Welcome Back
+          </ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Enter your credentials to continue your HELIX journey.
+          </ThemedText>
+        </View>
 
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          placeholderTextColor="#7A8696"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          placeholderTextColor="#7A8696"
-        />
+        <View
+          style={[
+            styles.form,
+            {
+              backgroundColor: palette.inputBackground,
+              borderColor: palette.inputBorder,
+            },
+          ]}
+        >
+          <TextInput
+            style={[styles.input, { color: palette.text }]}
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            placeholderTextColor="rgba(255,255,255,0.65)"
+          />
+          <TextInput
+            style={[styles.input, { color: palette.text }]}
+            placeholder="Password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            placeholderTextColor="rgba(255,255,255,0.65)"
+          />
+        </View>
+
+        <Pressable
+          style={[
+            styles.primaryButton,
+            { backgroundColor: palette.buttonPrimaryBackground },
+          ]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={palette.buttonPrimaryText} />
+          ) : (
+            <ThemedText
+              style={[styles.primaryText, { color: palette.buttonPrimaryText }]}
+            >
+              Sign In
+            </ThemedText>
+          )}
+        </Pressable>
+
+        <Pressable onPress={() => Alert.alert('Hang tight', 'Password reset flow coming soon.')}>
+          <ThemedText style={styles.forgot}>Forgot your password?</ThemedText>
+        </Pressable>
       </View>
-
-      <Pressable style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#0B1726" /> : <ThemedText style={styles.primaryText}>Login</ThemedText>}
-      </Pressable>
-    </ThemedView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 18 },
-  copy: { opacity: 0.75, lineHeight: 22 },
-  form: { gap: 14, marginTop: 12 },
-  input: {
-    borderRadius: 14,
+  background: { flex: 1 },
+  overlay: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 96,
+    paddingBottom: 48,
+    justifyContent: 'space-between',
+  },
+  header: {
+    gap: 12,
+  },
+  title: {
+    fontSize: 32,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    opacity: 0.8,
+    lineHeight: 22,
+  },
+  form: {
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#D8DEE9',
+    paddingVertical: 4,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    gap: 12,
+  },
+  input: {
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.12)',
     fontSize: 16,
-    color: '#111827',
   },
   primaryButton: {
     marginTop: 24,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: '#D9DBE1',
+    paddingVertical: 16,
+    borderRadius: 22,
     alignItems: 'center',
   },
   primaryText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111114',
+    letterSpacing: 1,
+  },
+  forgot: {
+    textAlign: 'center',
+    marginTop: 16,
+    fontSize: 14,
+    opacity: 0.75,
   },
 });
