@@ -9,7 +9,8 @@ import { handleSwapRecipe } from "../util-swap-recipe/index.ts";
 import { handleExportGrocery } from "../util-export-grocery/index.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
 
 function hasSecrets() {
   return Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
@@ -121,7 +122,11 @@ async function getTwoRecipes() {
   return data;
 }
 
-async function insertWorkout(planDayId: string, exerciseId: string, exerciseName: string) {
+async function insertWorkout(
+  planDayId: string,
+  exerciseId: string,
+  exerciseName: string,
+) {
   const client = await getClient();
   const block = [
     {
@@ -294,7 +299,10 @@ Deno.test({
     try {
       const result = await handleExportGrocery({ plan_id: planId });
       assert(result.ok, `export_grocery_list failed: ${result.error}`);
-      assert(result.items && result.items.length > 0, "No grocery items returned");
+      assert(
+        result.items && result.items.length > 0,
+        "No grocery items returned",
+      );
       assertStringIncludes(result.why ?? "", "Exported grocery list");
 
       const audit = await fetchLatestAudit(planId);

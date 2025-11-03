@@ -192,7 +192,8 @@ function applyGoalAdjustment(
     muscle_gain:
       "Added a gentle surplus (~12%) to drive muscle gain with controlled fat accrual.",
     recomp: "Kept calories near maintenance to prioritize body recomposition.",
-    endurance: "Shifted calories toward endurance output while preserving recovery fuel.",
+    endurance:
+      "Shifted calories toward endurance output while preserving recovery fuel.",
     maintenance: "Caloric target anchored at maintenance for stability.",
   };
   let target = tdee;
@@ -283,7 +284,9 @@ function determineReadiness(input: EPEInput): number {
   if (input.recent_metrics?.hrv_rmssd && input.recent_metrics.hrv_rmssd < 50) {
     deductions.push(10);
   }
-  if (input.recent_metrics?.sleep_score && input.recent_metrics.sleep_score < 70) {
+  if (
+    input.recent_metrics?.sleep_score && input.recent_metrics.sleep_score < 70
+  ) {
     deductions.push(8);
   }
   if (input.stress_baseline && input.stress_baseline >= 4) {
@@ -314,7 +317,8 @@ function matchesDiet(recipe: RecipeRow, diet: DietType): boolean {
   }
   if (diet === "vegan") return recipe.diet_type === "vegan";
   if (diet === "pescatarian") {
-    return recipe.diet_type === "pescatarian" || recipe.diet_type === "omnivore";
+    return recipe.diet_type === "pescatarian" ||
+      recipe.diet_type === "omnivore";
   }
   if (diet === "paleo") {
     const diets = getTagArray(recipe.tags, "diet");
@@ -343,7 +347,10 @@ function filterRecipes(input: EPEInput, recipes: RecipeRow[]): RecipeRow[] {
     );
 }
 
-function filterExercises(input: EPEInput, exercises: ExerciseRow[]): ExerciseRow[] {
+function filterExercises(
+  input: EPEInput,
+  exercises: ExerciseRow[],
+): ExerciseRow[] {
   return exercises.filter((exercise) => {
     const equipmentNeeded = getTagArray(exercise.tags, "equipment");
     if (!equipmentNeeded || equipmentNeeded.length === 0) return true;
@@ -431,10 +438,14 @@ function buildWeekPlan(
       ].filter((block) => block.exercises.length > 0);
 
       if (input.session_length_min < 45) {
-        dayAdjustments.push("Session condensed with higher density to fit <45 minute window.");
+        dayAdjustments.push(
+          "Session condensed with higher density to fit <45 minute window.",
+        );
       }
       if (input.training_age === "new") {
-        dayAdjustments.push("Form-focused cues and moderate RPE (6-7) for new lifter progression.");
+        dayAdjustments.push(
+          "Form-focused cues and moderate RPE (6-7) for new lifter progression.",
+        );
       }
 
       dayWorkouts.push({
@@ -444,7 +455,9 @@ function buildWeekPlan(
         blocks,
       });
     } else {
-      dayAdjustments.push("Active recovery emphasis: mobility, walking, and hydration.");
+      dayAdjustments.push(
+        "Active recovery emphasis: mobility, walking, and hydration.",
+      );
     }
 
     week.push({
@@ -495,7 +508,9 @@ function deriveContext(input: EPEInput): DerivedContext {
     );
   }
   if (input.motivation_baseline && input.motivation_baseline <= 2) {
-    explanations.push("Kept choices simple to rebuild momentum and confidence.");
+    explanations.push(
+      "Kept choices simple to rebuild momentum and confidence.",
+    );
   }
   if (input.training_age === "new") {
     explanations.push(
@@ -503,10 +518,14 @@ function deriveContext(input: EPEInput): DerivedContext {
     );
   }
   if (input.equipment.length <= 2) {
-    explanations.push("Exercise menu tailored to match your available equipment.");
+    explanations.push(
+      "Exercise menu tailored to match your available equipment.",
+    );
   }
   if (input.diet_type !== "omnivore" || input.allergies.length > 0) {
-    explanations.push("Meal plan respects your diet type and filters out allergens automatically.");
+    explanations.push(
+      "Meal plan respects your diet type and filters out allergens automatically.",
+    );
   }
 
   const ctx: DerivedContext = {

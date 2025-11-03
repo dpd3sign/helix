@@ -4,9 +4,9 @@ import {
   assertGreater,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  generatePlanPreview,
   type EPEInput,
   type ExerciseRow,
+  generatePlanPreview,
   type RecipeRow,
 } from "./planner.ts";
 

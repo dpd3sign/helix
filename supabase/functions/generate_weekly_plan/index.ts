@@ -23,16 +23,22 @@ import {
   SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2.43.4?target=deno&deno-std=0.224.0";
 import {
-  generatePlanPreview as buildPlanPreview,
   type DayPlan,
   type EPEInput,
   type ExerciseRow,
+  generatePlanPreview as buildPlanPreview,
   type RecipeRow,
   type WeekPlan,
 } from "./planner.ts";
 
 export { generatePlanPreview } from "./planner.ts";
-export type { DayPlan, EPEInput, ExerciseRow, RecipeRow, WeekPlan } from "./planner.ts";
+export type {
+  DayPlan,
+  EPEInput,
+  ExerciseRow,
+  RecipeRow,
+  WeekPlan,
+} from "./planner.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
