@@ -65,7 +65,7 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Pre-warm test deps (no-run, no npm) with timeout & retries
+      - name: Pre-warm test deps (no-run, CI config, no npm) with timeout & retries
         shell: bash
         run: |
           set -euo pipefail
@@ -73,7 +73,7 @@ jobs:
             local attempt="$1"
             local secs="$2"
             echo ">>> prewarm attempt ${attempt} (timeout ${secs}s)"
-            timeout "${secs}"s deno test -A --no-run \
+            timeout "${secs}"s deno test --config=deno.ci.json --no-npm --no-run \
               supabase/functions/generate_weekly_plan/generate_weekly_plan.test.ts \
               supabase/functions/jobs/jobs.test.ts \
               supabase/functions/utilities/utilities.test.ts \
@@ -81,9 +81,9 @@ jobs:
           }
           prewarm 1 180 || (sleep 5  && prewarm 2 240) || (sleep 10 && prewarm 3 300) || (echo "prewarm failed after 3 attempts" && exit 1)
 
-      - name: Run Deno tests
+      - name: Run Deno tests (CI config, no npm)
         run: |
-          deno test -A \
+          deno test --config=deno.ci.json --no-npm -A \
             supabase/functions/generate_weekly_plan/generate_weekly_plan.test.ts \
             supabase/functions/jobs/jobs.test.ts \
             supabase/functions/utilities/utilities.test.ts \
