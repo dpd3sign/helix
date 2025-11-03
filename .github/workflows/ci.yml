@@ -30,11 +30,11 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Lint
-        run: deno lint --rules-exclude=no-import-prefix,no-unused-vars,require-await supabase
+      - name: Format check
+        run: deno fmt --check supabase
 
       - name: Lint
-        run: deno lint
+        run: deno lint --rules-exclude=no-import-prefix,no-unused-vars,require-await supabase
 
   test:
     runs-on: ubuntu-latest
