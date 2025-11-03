@@ -65,23 +65,21 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Pre-warm remote deps with deno cache (no npm)
+      - name: Pre-warm test deps (no-run, no npm) with timeout & retries
         shell: bash
         run: |
           set -euo pipefail
           prewarm() {
             local attempt="$1"
             local secs="$2"
-            echo ">>> cache attempt ${attempt} (timeout ${secs}s)"
-            timeout "${secs}"s deno cache -A \
-              supabase/functions/generate_weekly_plan/index.ts \
+            echo ">>> prewarm attempt ${attempt} (timeout ${secs}s)"
+            timeout "${secs}"s deno test -A --no-run \
               supabase/functions/generate_weekly_plan/generate_weekly_plan.test.ts \
               supabase/functions/jobs/jobs.test.ts \
               supabase/functions/utilities/utilities.test.ts \
-              supabase/functions/wearables-import-mock/index.ts \
               supabase/functions/wearables-import-mock/wearables-import-mock.test.ts
           }
-          prewarm 1 180 || (sleep 5  && prewarm 2 240) || (sleep 10 && prewarm 3 300) || (echo "cache prewarm failed after 3 attempts" && exit 1)
+          prewarm 1 180 || (sleep 5  && prewarm 2 240) || (sleep 10 && prewarm 3 300) || (echo "prewarm failed after 3 attempts" && exit 1)
 
       - name: Run Deno tests
         run: |
