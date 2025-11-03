@@ -30,6 +30,9 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
+      - name: Install Deno deps (node types / npm)
+        run: deno install
+
       - name: Format check
         run: deno fmt --check supabase
 
