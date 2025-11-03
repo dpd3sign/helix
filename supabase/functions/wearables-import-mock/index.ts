@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import {
+  createClient,
+  type SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 import {
   corsHeaders,
-  runJob,
   type JobLogicResult,
+  runJob,
   type RunJobResponse,
 } from "../_shared/job-utils.ts";
 import { buildWhySentence } from "../_shared/plan-utils.ts";
@@ -28,7 +31,8 @@ type ImportResponse = {
 };
 
 const JOB_KEY = "mock_import";
-const MOCK_PATH = new URL("../__mocks__/wearables/weekly.json", import.meta.url).pathname;
+const MOCK_PATH =
+  new URL("../__mocks__/wearables/weekly.json", import.meta.url).pathname;
 
 function ensureEnv(): { url: string; serviceRoleKey: string } {
   const url = Deno.env.get("SUPABASE_URL");
@@ -75,7 +79,9 @@ async function upsertWearables(
 
 async function importMockData(userId: string): Promise<JobLogicResult> {
   const { url, serviceRoleKey } = ensureEnv();
-  const client = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+  const client = createClient(url, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
 
   const notes: string[] = [];
   const records = await loadMockData();
@@ -136,7 +142,10 @@ if (import.meta.main) {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: corsHeaders,
+      });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -144,7 +153,10 @@ if (import.meta.main) {
     if (!userId) {
       return new Response(
         JSON.stringify({ ok: false, error: "user_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 

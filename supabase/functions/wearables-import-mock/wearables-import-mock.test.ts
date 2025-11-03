@@ -7,12 +7,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 import { runMockImport } from "./index.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
 const shouldSkip = SUPABASE_SERVICE_ROLE_KEY.length === 0;
 
 const client = shouldSkip
   ? null
-  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
 
 async function createTestUser() {
   if (!client) return null;
@@ -66,14 +69,21 @@ Deno.test({
     try {
       const firstResult = await runMockImport(user.id);
       assert(firstResult.ok, `first run failed: ${firstResult.error}`);
-      assert(firstResult.rows_affected && firstResult.rows_affected > 0, "expected rows affected on first run");
+      assert(
+        firstResult.rows_affected && firstResult.rows_affected > 0,
+        "expected rows affected on first run",
+      );
 
       const firstCount = await countWearableRows(user.id);
       assertEquals(firstCount, firstResult.rows_affected);
 
       const secondResult = await runMockImport(user.id);
       assert(secondResult.ok, `second run failed: ${secondResult.error}`);
-      assertEquals(secondResult.rows_affected, firstResult.rows_affected, "upsert should not duplicate records");
+      assertEquals(
+        secondResult.rows_affected,
+        firstResult.rows_affected,
+        "upsert should not duplicate records",
+      );
 
       const secondCount = await countWearableRows(user.id);
       assertEquals(secondCount, firstCount);

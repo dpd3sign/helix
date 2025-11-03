@@ -1,15 +1,28 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
-import { Link } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
+import { Link } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { syncHealthKitDailyMetrics } from '@/lib/healthkit';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/providers/auth-provider';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { syncHealthKitDailyMetrics } from "@/lib/healthkit";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/providers/auth-provider";
 
-const providers = ['apple_health', 'fitbit', 'garmin', 'whoop', 'oura', 'google_fit'] as const;
+const providers = [
+  "apple_health",
+  "fitbit",
+  "garmin",
+  "whoop",
+  "oura",
+  "google_fit",
+] as const;
 
 type Provider = (typeof providers)[number];
 
@@ -20,30 +33,32 @@ type WearableConnection = {
 };
 
 const PROVIDER_LABEL: Record<Provider, string> = {
-  apple_health: 'Apple Health',
-  fitbit: 'Fitbit',
-  garmin: 'Garmin',
-  whoop: 'WHOOP',
-  oura: 'Oura',
-  google_fit: 'Google Fit',
+  apple_health: "Apple Health",
+  fitbit: "Fitbit",
+  garmin: "Garmin",
+  whoop: "WHOOP",
+  oura: "Oura",
+  google_fit: "Google Fit",
 };
 
 export default function WearableSyncScreen() {
   const { session } = useAuth();
   const [connections, setConnections] = useState<WearableConnection[]>([]);
   const [loading, setLoading] = useState(false);
-  const [invokingProvider, setInvokingProvider] = useState<Provider | null>(null);
+  const [invokingProvider, setInvokingProvider] = useState<Provider | null>(
+    null,
+  );
 
   const fetchConnections = useCallback(async () => {
     if (!session?.user) return;
     setLoading(true);
     const { data, error } = await supabase
-      .from('wearable_connections')
-      .select('provider,status,synced_at')
-      .eq('user_id', session.user.id);
+      .from("wearable_connections")
+      .select("provider,status,synced_at")
+      .eq("user_id", session.user.id);
 
     if (error) {
-      console.warn('[wearables] fetch error', error.message);
+      console.warn("[wearables] fetch error", error.message);
     } else if (data) {
       setConnections(data as WearableConnection[]);
     }
@@ -53,7 +68,7 @@ export default function WearableSyncScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchConnections();
-    }, [fetchConnections])
+    }, [fetchConnections]),
   );
 
   useEffect(() => {
@@ -64,21 +79,24 @@ export default function WearableSyncScreen() {
 
   const handleAppleHealthSync = async () => {
     if (!session?.user) {
-      Alert.alert('Login required', 'Sign in before syncing Apple Health data.');
+      Alert.alert(
+        "Login required",
+        "Sign in before syncing Apple Health data.",
+      );
       return;
     }
 
     try {
-      setInvokingProvider('apple_health');
+      setInvokingProvider("apple_health");
       const { inserted } = await syncHealthKitDailyMetrics();
       Alert.alert(
-        'Apple Health Synced',
+        "Apple Health Synced",
         inserted > 0
-          ? `Imported ${inserted} day${inserted === 1 ? '' : 's'} of metrics.`
-          : 'No new metrics were available today.'
+          ? `Imported ${inserted} day${inserted === 1 ? "" : "s"} of metrics.`
+          : "No new metrics were available today.",
       );
     } catch (error) {
-      Alert.alert('Apple Health', (error as Error).message);
+      Alert.alert("Apple Health", (error as Error).message);
     } finally {
       setInvokingProvider(null);
       fetchConnections();
@@ -87,26 +105,29 @@ export default function WearableSyncScreen() {
 
   const handleConnect = async (provider: Provider) => {
     if (!session?.user) {
-      Alert.alert('Login required', 'Sign in before connecting a wearable.');
+      Alert.alert("Login required", "Sign in before connecting a wearable.");
       return;
     }
 
-    if (provider === 'apple_health') {
+    if (provider === "apple_health") {
       await handleAppleHealthSync();
       return;
     }
 
     try {
       setInvokingProvider(provider);
-      const { error } = await supabase.functions.invoke('wearable-authorize', {
+      const { error } = await supabase.functions.invoke("wearable-authorize", {
         body: { provider },
       });
       if (error) {
         throw error;
       }
-      Alert.alert('Check device', 'Complete the authorization in the provider dialog.');
+      Alert.alert(
+        "Check device",
+        "Complete the authorization in the provider dialog.",
+      );
     } catch (error) {
-      Alert.alert('Unable to start sync', (error as Error).message);
+      Alert.alert("Unable to start sync", (error as Error).message);
     } finally {
       setInvokingProvider(null);
       fetchConnections();
@@ -116,20 +137,20 @@ export default function WearableSyncScreen() {
   const handleSyncNow = async (provider: Provider) => {
     if (!session?.user) return;
 
-    if (provider === 'apple_health') {
+    if (provider === "apple_health") {
       await handleAppleHealthSync();
       return;
     }
 
     try {
       setInvokingProvider(provider);
-      const { error } = await supabase.functions.invoke('sync-wearables', {
+      const { error } = await supabase.functions.invoke("sync-wearables", {
         body: { provider },
       });
       if (error) throw error;
-      Alert.alert('Sync queued', `${PROVIDER_LABEL[provider]} sync requested.`);
+      Alert.alert("Sync queued", `${PROVIDER_LABEL[provider]} sync requested.`);
     } catch (error) {
-      Alert.alert('Sync failed', (error as Error).message);
+      Alert.alert("Sync failed", (error as Error).message);
     } finally {
       setInvokingProvider(null);
       fetchConnections();
@@ -143,59 +164,70 @@ export default function WearableSyncScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="subtitle">Connect Wearables</ThemedText>
       <ThemedText style={styles.copy}>
-        Authorize each provider to stream biometrics. Supabase edge functions manage OAuth and cron-based data pulls.
+        Authorize each provider to stream biometrics. Supabase edge functions
+        manage OAuth and cron-based data pulls.
       </ThemedText>
 
       <View style={styles.card}>
         {providers.map((provider) => {
           const info = connectionFor(provider);
           const isLoading = invokingProvider === provider;
-          const isApple = provider === 'apple_health';
+          const isApple = provider === "apple_health";
           return (
             <View key={provider} style={styles.providerRow}>
               <View style={{ flex: 1 }}>
-                <ThemedText type="defaultSemiBold">{PROVIDER_LABEL[provider]}</ThemedText>
+                <ThemedText type="defaultSemiBold">
+                  {PROVIDER_LABEL[provider]}
+                </ThemedText>
                 <ThemedText style={styles.status}>
-                  Status: {info?.status ?? 'Not connected'}
+                  Status: {info?.status ?? "Not connected"}
                 </ThemedText>
                 {info?.synced_at && (
-                  <ThemedText style={styles.status}>Last sync: {new Date(info.synced_at).toLocaleString()}</ThemedText>
+                  <ThemedText style={styles.status}>
+                    Last sync: {new Date(info.synced_at).toLocaleString()}
+                  </ThemedText>
                 )}
               </View>
-              {isApple ? (
-                <Pressable
-                  style={styles.appleButton}
-                  onPress={handleAppleHealthSync}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                  ) : (
-                    <ThemedText style={styles.appleText}>Sync Apple Health</ThemedText>
-                  )}
-                </Pressable>
-              ) : (
-                <>
+              {isApple
+                ? (
                   <Pressable
-                    style={styles.linkButton}
-                    onPress={() => handleConnect(provider)}
+                    style={styles.appleButton}
+                    onPress={handleAppleHealthSync}
                     disabled={isLoading}
                   >
-                    {isLoading ? (
-                      <ActivityIndicator color="#1F6FEB" />
-                    ) : (
-                      <ThemedText style={styles.linkText}>{info ? 'Reconnect' : 'Connect'}</ThemedText>
-                    )}
+                    {isLoading
+                      ? <ActivityIndicator color="#FFFFFF" />
+                      : (
+                        <ThemedText style={styles.appleText}>
+                          Sync Apple Health
+                        </ThemedText>
+                      )}
                   </Pressable>
-                  <Pressable
-                    style={styles.syncButton}
-                    onPress={() => handleSyncNow(provider)}
-                    disabled={isLoading}
-                  >
-                    <ThemedText style={styles.syncText}>Sync</ThemedText>
-                  </Pressable>
-                </>
-              )}
+                )
+                : (
+                  <>
+                    <Pressable
+                      style={styles.linkButton}
+                      onPress={() => handleConnect(provider)}
+                      disabled={isLoading}
+                    >
+                      {isLoading
+                        ? <ActivityIndicator color="#1F6FEB" />
+                        : (
+                          <ThemedText style={styles.linkText}>
+                            {info ? "Reconnect" : "Connect"}
+                          </ThemedText>
+                        )}
+                    </Pressable>
+                    <Pressable
+                      style={styles.syncButton}
+                      onPress={() => handleSyncNow(provider)}
+                      disabled={isLoading}
+                    >
+                      <ThemedText style={styles.syncText}>Sync</ThemedText>
+                    </Pressable>
+                  </>
+                )}
             </View>
           );
         })}
@@ -225,62 +257,62 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E0E6F0',
+    borderColor: "#E0E6F0",
     padding: 18,
     gap: 12,
   },
   providerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   status: {
     fontSize: 12,
-    color: '#5A6475',
+    color: "#5A6475",
   },
   linkButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1F6FEB',
+    borderColor: "#1F6FEB",
   },
   linkText: {
-    fontWeight: '600',
-    color: '#1F6FEB',
+    fontWeight: "600",
+    color: "#1F6FEB",
   },
   appleButton: {
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 14,
-    backgroundColor: '#111111',
+    backgroundColor: "#111111",
   },
   appleText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
   syncButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#1F6FEB1A',
+    backgroundColor: "#1F6FEB1A",
   },
   syncText: {
     fontSize: 12,
-    color: '#1F6FEB',
-    fontWeight: '600',
+    color: "#1F6FEB",
+    fontWeight: "600",
   },
   nextButton: {
-    marginTop: 'auto',
-    alignSelf: 'flex-end',
+    marginTop: "auto",
+    alignSelf: "flex-end",
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 16,
-    backgroundColor: '#1F6FEB',
+    backgroundColor: "#1F6FEB",
   },
   nextText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
     fontSize: 16,
   },
 });

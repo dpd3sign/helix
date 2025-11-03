@@ -1,4 +1,10 @@
-import { PropsWithChildren, createContext, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 type AccountDetails = {
   email: string;
@@ -10,11 +16,11 @@ type AccountDetails = {
 
 type ProfileDetails = {
   dateOfBirth: string;
-  sex: 'male' | 'female';
+  sex: "male" | "female";
   heightCm: number;
   weightKg: number;
-  unitSystem: 'metric' | 'imperial';
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'high';
+  unitSystem: "metric" | "imperial";
+  activityLevel: "sedentary" | "light" | "moderate" | "high";
   timezone: string;
 };
 
@@ -26,9 +32,9 @@ type BaselineDetails = {
 };
 
 type GoalsDetails = {
-  goalType: 'recomposition' | 'strength_gain' | 'cutting' | 'endurance';
+  goalType: "recomposition" | "strength_gain" | "cutting" | "endurance";
   equipmentAvailable: string[];
-  preferredStyle: 'aesthetic' | 'functional';
+  preferredStyle: "aesthetic" | "functional";
   identityArchetype?: string;
 };
 
@@ -48,7 +54,9 @@ type OnboardingContextValue = OnboardingState & {
   reset: () => void;
 };
 
-const OnboardingContext = createContext<OnboardingContextValue | undefined>(undefined);
+const OnboardingContext = createContext<OnboardingContextValue | undefined>(
+  undefined,
+);
 
 const defaultState: OnboardingState = {
   account: null,
@@ -70,20 +78,27 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
       setIdentityArchetype: (value) =>
         setState((prev) => {
           if (!prev.goals) return prev;
-          return { ...prev, goals: { ...prev.goals, identityArchetype: value } };
+          return {
+            ...prev,
+            goals: { ...prev.goals, identityArchetype: value },
+          };
         }),
       reset: () => setState(defaultState),
     }),
     [state],
   );
 
-  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
+  return (
+    <OnboardingContext.Provider value={value}>
+      {children}
+    </OnboardingContext.Provider>
+  );
 }
 
 export function useOnboarding() {
   const context = useContext(OnboardingContext);
   if (!context) {
-    throw new Error('useOnboarding must be used within an OnboardingProvider');
+    throw new Error("useOnboarding must be used within an OnboardingProvider");
   }
   return context;
 }

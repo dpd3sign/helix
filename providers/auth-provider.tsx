@@ -1,17 +1,30 @@
-import { PropsWithChildren, createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 type AuthContextValue = {
-  session: NonNullable<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session']> | null;
+  session:
+    | NonNullable<
+      Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]
+    >
+    | null;
   loading: boolean;
 };
 
-const AuthContext = createContext<AuthContextValue>({ session: null, loading: true });
+const AuthContext = createContext<AuthContextValue>({
+  session: null,
+  loading: true,
+});
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [session, setSession] =
-    useState<AuthContextValue['session']>(null);
+  const [session, setSession] = useState<AuthContextValue["session"]>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,9 +39,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     initSession();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+      },
+    );
 
     return () => {
       isMounted = false;

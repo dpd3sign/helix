@@ -1,35 +1,50 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const checkIns = [
-  { prompt: 'Did you embody your chosen identity today?', scale: 'Yes / No / Almost' },
-  { prompt: 'Confidence index slider', scale: '0 – 100% self-rating' },
-  { prompt: 'Mood alignment', scale: 'Calm · Focused · Driven · Off Balance' },
+  {
+    prompt: "Did you embody your chosen identity today?",
+    scale: "Yes / No / Almost",
+  },
+  { prompt: "Confidence index slider", scale: "0 – 100% self-rating" },
+  { prompt: "Mood alignment", scale: "Calm · Focused · Driven · Off Balance" },
 ];
 
 export default function IdentityCheckInScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.panel, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.panel, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Identity Check-In</ThemedText>
           <ThemedText style={styles.copy}>
-            Quick daily touchpoint feeding the confidence index. Scores also inform adaptive nudges.
+            Quick daily touchpoint feeding the confidence index. Scores also
+            inform adaptive nudges.
           </ThemedText>
         </View>
 
         <View style={styles.stack}>
-          {checkIns.map(item => (
+          {checkIns.map((item) => (
             <View
               key={item.prompt}
-              style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}
+              style={[styles.card, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
             >
               <ThemedText type="defaultSemiBold">{item.prompt}</ThemedText>
               <ThemedText style={styles.scale}>{item.scale}</ThemedText>

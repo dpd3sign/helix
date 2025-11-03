@@ -1,11 +1,11 @@
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 import AppleHealthKit, {
   HealthKitPermissions,
   HealthValue,
   SleepValue,
-} from 'react-native-health';
+} from "react-native-health";
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 const permissions: HealthKitPermissions = {
   permissions: {
@@ -50,7 +50,7 @@ const getStepSamples = (startDate: string) =>
       (err, results) => {
         if (err) reject(err);
         else resolve(results ?? []);
-      }
+      },
     );
   });
 
@@ -61,7 +61,7 @@ const getHRVSamples = (startDate: string) =>
       (err, results) => {
         if (err) reject(err);
         else resolve(results ?? []);
-      }
+      },
     );
   });
 
@@ -74,14 +74,14 @@ const getSleepSamples = (startDate: string) =>
   });
 
 export async function syncHealthKitDailyMetrics(lastNDays = 7) {
-  if (Platform.OS !== 'ios') {
-    throw new Error('Apple Health is only available on iOS devices.');
+  if (Platform.OS !== "ios") {
+    throw new Error("Apple Health is only available on iOS devices.");
   }
 
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
   if (!userId) {
-    throw new Error('You must be logged in to sync Apple Health data.');
+    throw new Error("You must be logged in to sync Apple Health data.");
   }
 
   const end = new Date();
@@ -113,7 +113,7 @@ export async function syncHealthKitDailyMetrics(lastNDays = 7) {
   });
 
   sleepSamples.forEach((sample) => {
-    if (!sample.value || sample.value.toLowerCase() !== 'asleep') return;
+    if (!sample.value || sample.value.toLowerCase() !== "asleep") return;
     const startMs = new Date(sample.startDate).getTime();
     const endMs = new Date(sample.endDate).getTime();
     const minutes = Math.max(0, (endMs - startMs) / (1000 * 60));
@@ -124,15 +124,14 @@ export async function syncHealthKitDailyMetrics(lastNDays = 7) {
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const rows = Array.from(metricsMap.entries()).map(([date, bucket]) => {
-    const averageHrv =
-      bucket.hrvSamples.length > 0
-        ? bucket.hrvSamples.reduce((sum, value) => sum + value, 0) /
-          bucket.hrvSamples.length
-        : null;
+    const averageHrv = bucket.hrvSamples.length > 0
+      ? bucket.hrvSamples.reduce((sum, value) => sum + value, 0) /
+        bucket.hrvSamples.length
+      : null;
 
     return {
       user_id: userId,
-      provider: 'apple_health',
+      provider: "apple_health",
       date,
       timezone,
       steps: Math.round(bucket.steps),
@@ -141,7 +140,7 @@ export async function syncHealthKitDailyMetrics(lastNDays = 7) {
         ? Number((bucket.sleepMinutes / 60).toFixed(2))
         : null,
       data: {
-        source: 'apple_health',
+        source: "apple_health",
         samples: {
           steps: stepsSamples.length,
           hrv: bucket.hrvSamples.length,
@@ -155,21 +154,21 @@ export async function syncHealthKitDailyMetrics(lastNDays = 7) {
     return { inserted: 0 };
   }
 
-  await supabase.from('wearable_daily_metrics').upsert(rows, {
-    onConflict: 'user_id,provider,date',
+  await supabase.from("wearable_daily_metrics").upsert(rows, {
+    onConflict: "user_id,provider,date",
   });
 
   await supabase
-    .from('wearable_connections')
+    .from("wearable_connections")
     .upsert(
       {
         user_id: userId,
-        provider: 'apple_health',
-        status: 'connected',
+        provider: "apple_health",
+        status: "connected",
         synced_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'user_id,provider' }
+      { onConflict: "user_id,provider" },
     );
 
   return { inserted: rows.length };

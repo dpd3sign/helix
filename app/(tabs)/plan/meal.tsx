@@ -1,12 +1,12 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { supabase } from '@/lib/supabase';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { supabase } from "@/lib/supabase";
 
 interface Meal {
   meal_id: string;
@@ -34,7 +34,7 @@ interface MealPlan {
 
 export default function MealViewScreen() {
   const params = useLocalSearchParams<{ planId?: string }>();
-  const palette = Colors[useColorScheme() ?? 'light'];
+  const palette = Colors[useColorScheme() ?? "light"];
   const [day, setDay] = useState<MealPlan | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -46,13 +46,15 @@ export default function MealViewScreen() {
     setLoading(true);
     const today = new Date().toISOString().slice(0, 10);
     const { data, error } = await supabase
-      .from('meal_plans')
-      .select('meal_plan_id,date,target_calories,protein_g,carbs_g,fat_g,fiber_g,notes, meals (meal_id,meal_type,planned_calories,protein_g,carbs_g,fat_g,fiber_g)')
-      .eq('plan_id', params.planId)
-      .order('date', { ascending: true });
+      .from("meal_plans")
+      .select(
+        "meal_plan_id,date,target_calories,protein_g,carbs_g,fat_g,fiber_g,notes, meals (meal_id,meal_type,planned_calories,protein_g,carbs_g,fat_g,fiber_g)",
+      )
+      .eq("plan_id", params.planId)
+      .order("date", { ascending: true });
 
     if (error) {
-      console.warn('[meal_plan] fetch error', error.message);
+      console.warn("[meal_plan] fetch error", error.message);
       setDay(null);
     } else if (data) {
       const plans = data as MealPlan[];
@@ -64,49 +66,82 @@ export default function MealViewScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchMeals();
-    }, [fetchMeals])
+    }, [fetchMeals]),
   );
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <ThemedText type="subtitle">Meal Plan</ThemedText>
         <ThemedText style={styles.copy}>
-          Calorie and macro targets align with your readiness, expenditure, and compliance history.
+          Calorie and macro targets align with your readiness, expenditure, and
+          compliance history.
         </ThemedText>
 
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}> 
-          {day ? (
-            <>
-              <ThemedText type="defaultSemiBold">
-                {new Date(day.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
+          {day
+            ? (
+              <>
+                <ThemedText type="defaultSemiBold">
+                  {new Date(day.date).toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </ThemedText>
+                <ThemedText style={styles.summary}>
+                  {day.target_calories ?? "—"} kcal · P{" "}
+                  {day.protein_g ?? "—"}g · C {day.carbs_g ?? "—"}g · F{" "}
+                  {day.fat_g ?? "—"}g · Fiber {day.fiber_g ?? "—"}g
+                </ThemedText>
+                {day.notes && (
+                  <ThemedText style={styles.note}>{day.notes}</ThemedText>
+                )}
+              </>
+            )
+            : (
+              <ThemedText style={styles.placeholder}>
+                Meal plan not generated yet.
               </ThemedText>
-              <ThemedText style={styles.summary}>
-                {day.target_calories ?? '—'} kcal · P {day.protein_g ?? '—'}g · C {day.carbs_g ?? '—'}g · F {day.fat_g ?? '—'}g · Fiber {day.fiber_g ?? '—'}g
-              </ThemedText>
-              {day.notes && <ThemedText style={styles.note}>{day.notes}</ThemedText>}
-            </>
-          ) : (
-            <ThemedText style={styles.placeholder}>Meal plan not generated yet.</ThemedText>
-          )}
+            )}
         </View>
 
         {day?.meals?.map((meal) => (
           <View
             key={meal.meal_id}
-            style={[styles.mealCard, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}
+            style={[styles.mealCard, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
           >
             <ThemedText type="defaultSemiBold">{meal.meal_type}</ThemedText>
             <ThemedText style={styles.mealDetail}>
-              {meal.planned_calories ?? '—'} kcal · P {meal.protein_g ?? '—'}g · C {meal.carbs_g ?? '—'}g · F {meal.fat_g ?? '—'}g
+              {meal.planned_calories ?? "—"} kcal · P{" "}
+              {meal.protein_g ?? "—"}g · C {meal.carbs_g ?? "—"}g · F{" "}
+              {meal.fat_g ?? "—"}g
             </ThemedText>
           </View>
         ))}
 
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}> 
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Compliance & Adjustments</ThemedText>
           <ThemedText style={styles.note}>
-            Meal logs compare against these targets. Deviations beyond thresholds call adaptive macros and trigger the grocery automation pipeline.
+            Meal logs compare against these targets. Deviations beyond
+            thresholds call adaptive macros and trigger the grocery automation
+            pipeline.
           </ThemedText>
         </View>
 

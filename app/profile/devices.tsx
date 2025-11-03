@@ -1,34 +1,57 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const devices = [
-  { name: 'Apple Health', status: 'Connected', lastSync: 'Awaiting wearable API' },
-  { name: 'Oura Ring', status: 'Not linked', lastSync: '-' },
+  {
+    name: "Apple Health",
+    status: "Connected",
+    lastSync: "Awaiting wearable API",
+  },
+  { name: "Oura Ring", status: "Not linked", lastSync: "-" },
 ];
 
 export default function ManageDevicesScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Manage Devices</ThemedText>
           <ThemedText style={styles.copy}>
-            Display OAuth status, refresh token validity, and a test sync button per provider.
+            Display OAuth status, refresh token validity, and a test sync button
+            per provider.
           </ThemedText>
         </View>
         <View style={styles.stack}>
-          {devices.map(device => (
-            <View key={device.name} style={[styles.deviceCard, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+          {devices.map((device) => (
+            <View
+              key={device.name}
+              style={[styles.deviceCard, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
+            >
               <ThemedText type="defaultSemiBold">{device.name}</ThemedText>
-              <ThemedText style={styles.status}>Status: {device.status}</ThemedText>
-              <ThemedText style={styles.status}>Last sync: {device.lastSync}</ThemedText>
+              <ThemedText style={styles.status}>
+                Status: {device.status}
+              </ThemedText>
+              <ThemedText style={styles.status}>
+                Last sync: {device.lastSync}
+              </ThemedText>
             </View>
           ))}
         </View>

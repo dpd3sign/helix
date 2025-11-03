@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import Constants from "expo-constants";
 
 type Extra = {
   supabaseUrl?: string;
@@ -12,7 +12,7 @@ const getEnvVar = (key: keyof NodeJS.ProcessEnv) => {
   if (!value) {
     console.warn(`[env] Missing environment variable ${key}.`);
   }
-  return value ?? '';
+  return value ?? "";
 };
 
 const resolve = (explicit?: string, fallbackKey?: keyof NodeJS.ProcessEnv) => {
@@ -22,9 +22,16 @@ const resolve = (explicit?: string, fallbackKey?: keyof NodeJS.ProcessEnv) => {
   if (fallbackKey) {
     return getEnvVar(fallbackKey);
   }
-  return '';
+  return "";
 };
 
-export const SUPABASE_URL = resolve(extra.supabaseUrl, 'EXPO_PUBLIC_SUPABASE_URL');
-export const SUPABASE_ANON_KEY = resolve(extra.supabaseAnonKey, 'EXPO_PUBLIC_SUPABASE_ANON_KEY');
-export const SUPABASE_FUNCTION_URL = process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_URL ?? '';
+export const SUPABASE_URL = resolve(
+  extra.supabaseUrl,
+  "EXPO_PUBLIC_SUPABASE_URL",
+);
+export const SUPABASE_ANON_KEY = resolve(
+  extra.supabaseAnonKey,
+  "EXPO_PUBLIC_SUPABASE_ANON_KEY",
+);
+export const SUPABASE_FUNCTION_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_URL ?? "";

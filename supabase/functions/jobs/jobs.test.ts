@@ -8,16 +8,20 @@ import { runSyncWearablesJob } from "../job-sync-wearables/index.ts";
 import { runRefreshMetricsJob } from "../job-refresh-metrics/index.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
 
 const shouldSkip = SUPABASE_SERVICE_ROLE_KEY.length === 0;
 const client = shouldSkip
   ? null
-  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
 
 async function fetchJobRun(id: string) {
   if (!client) return null;
-  const { data } = await client.from("job_runs").select("*").eq("id", id).single();
+  const { data } = await client.from("job_runs").select("*").eq("id", id)
+    .single();
   return data;
 }
 

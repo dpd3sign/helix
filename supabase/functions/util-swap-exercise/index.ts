@@ -62,7 +62,10 @@ function getTagArray(tags: Record<string, unknown>, key: string): string[] {
   return Array.isArray(value) ? value as string[] : [];
 }
 
-async function fetchPlanDay(client: SupabaseClient, planDayId: string): Promise<PlanDayRow | null> {
+async function fetchPlanDay(
+  client: SupabaseClient,
+  planDayId: string,
+): Promise<PlanDayRow | null> {
   const { data, error } = await client
     .from("plan_days")
     .select("id, plan_id, adjustments_made")
@@ -72,7 +75,10 @@ async function fetchPlanDay(client: SupabaseClient, planDayId: string): Promise<
   return data;
 }
 
-async function fetchWorkouts(client: SupabaseClient, planDayId: string): Promise<WorkoutRow[]> {
+async function fetchWorkouts(
+  client: SupabaseClient,
+  planDayId: string,
+): Promise<WorkoutRow[]> {
   const { data, error } = await client
     .from("workouts")
     .select("id, plan_day_id, blocks")
@@ -81,7 +87,10 @@ async function fetchWorkouts(client: SupabaseClient, planDayId: string): Promise
   return data ?? [];
 }
 
-async function fetchExercise(client: SupabaseClient, id: string): Promise<ExerciseRow | null> {
+async function fetchExercise(
+  client: SupabaseClient,
+  id: string,
+): Promise<ExerciseRow | null> {
   const { data, error } = await client
     .from("exercises")
     .select("id, name, tags")
@@ -125,7 +134,10 @@ function enrichBlocks(
   return { blocks: updatedBlocks, updated };
 }
 
-function buildExerciseWhy(fromExercise: ExerciseRow, toExercise: ExerciseRow): string {
+function buildExerciseWhy(
+  fromExercise: ExerciseRow,
+  toExercise: ExerciseRow,
+): string {
   const fromPatterns = getTagArray(fromExercise.tags ?? {}, "pattern");
   const toPatterns = getTagArray(toExercise.tags ?? {}, "pattern");
   const toEquipment = getTagArray(toExercise.tags ?? {}, "equipment");
@@ -137,9 +149,17 @@ function buildExerciseWhy(fromExercise: ExerciseRow, toExercise: ExerciseRow): s
 
   if (toPatterns.length > 0) {
     if (fromPatterns.some((p) => toPatterns.includes(p))) {
-      parts.push(`Maintains the ${toPatterns.join("/")} pattern while offering a fresh stimulus.`);
+      parts.push(
+        `Maintains the ${
+          toPatterns.join("/")
+        } pattern while offering a fresh stimulus.`,
+      );
     } else {
-      parts.push(`Shifts focus toward the ${toPatterns.join("/")} pattern for balanced development.`);
+      parts.push(
+        `Shifts focus toward the ${
+          toPatterns.join("/")
+        } pattern for balanced development.`,
+      );
     }
   }
 
@@ -148,7 +168,9 @@ function buildExerciseWhy(fromExercise: ExerciseRow, toExercise: ExerciseRow): s
   }
 
   if (focus.length > 0) {
-    parts.push(`Targets ${focus.join(", ")} to align with current training priorities.`);
+    parts.push(
+      `Targets ${focus.join(", ")} to align with current training priorities.`,
+    );
   }
 
   return buildWhySentence(parts);
@@ -165,7 +187,10 @@ async function updatePlanDayAdjustments(
     .update({ adjustments_made: updatedAdjustments })
     .eq("id", planDay.id);
   if (error) {
-    console.error("[swap_exercise] failed to update plan_day adjustments", error);
+    console.error(
+      "[swap_exercise] failed to update plan_day adjustments",
+      error,
+    );
   }
 }
 
@@ -235,14 +260,19 @@ async function swapExercise(data: SwapExerciseRequest): Promise<SwapResponse> {
   };
   await updatePlanDayAdjustments(client, planDay, adjustmentEntry);
 
-  await logPlanAudit(client, planDay.plan_id, `Swap exercise: ${fromExercise.name} → ${toExercise.name}`, {
-    type: "swap_exercise",
-    plan_day_id: planDay.id,
-    workout_id: targetWorkout.id,
-    from: { id: fromExercise.id, name: fromExercise.name },
-    to: { id: toExercise.id, name: toExercise.name },
-    why,
-  });
+  await logPlanAudit(
+    client,
+    planDay.plan_id,
+    `Swap exercise: ${fromExercise.name} → ${toExercise.name}`,
+    {
+      type: "swap_exercise",
+      plan_day_id: planDay.id,
+      workout_id: targetWorkout.id,
+      from: { id: fromExercise.id, name: fromExercise.name },
+      to: { id: toExercise.id, name: toExercise.name },
+      why,
+    },
+  );
 
   return {
     ok: true,
@@ -254,7 +284,9 @@ async function swapExercise(data: SwapExerciseRequest): Promise<SwapResponse> {
   };
 }
 
-export async function handleSwapExercise(body: SwapExerciseRequest): Promise<SwapResponse> {
+export async function handleSwapExercise(
+  body: SwapExerciseRequest,
+): Promise<SwapResponse> {
   try {
     return await swapExercise(body);
   } catch (error) {
@@ -273,7 +305,10 @@ if (import.meta.main) {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: corsHeaders,
+      });
     }
 
     const body = await req.json().catch(() => ({})) as SwapExerciseRequest;

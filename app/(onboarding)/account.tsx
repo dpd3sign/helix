@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -6,30 +6,30 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
-  View,
   useColorScheme,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
 
-import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
-import { useOnboarding } from '@/providers/onboarding-provider';
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
+import { supabase } from "@/lib/supabase";
+import { useOnboarding } from "@/providers/onboarding-provider";
 
 export default function AccountCreationScreen() {
   const router = useRouter();
-  const scheme = useColorScheme() ?? 'dark';
+  const scheme = useColorScheme() ?? "dark";
   const palette = Colors[scheme];
   const { setAccount } = useOnboarding();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
     if (!fullName || !email || !password) {
-      Alert.alert('Missing details', 'Name, email, and password are required.');
+      Alert.alert("Missing details", "Name, email, and password are required.");
       return;
     }
 
@@ -52,8 +52,8 @@ export default function AccountCreationScreen() {
 
       if (!data.user) {
         Alert.alert(
-          'Verify email',
-          'Check your inbox to verify the account before continuing.'
+          "Verify email",
+          "Check your inbox to verify the account before continuing.",
         );
         return;
       }
@@ -66,9 +66,12 @@ export default function AccountCreationScreen() {
         userId: data.user.id,
       });
 
-      router.push('/(onboarding)/initial-questions');
+      router.push("/(onboarding)/initial-questions");
     } catch (error) {
-      Alert.alert('Unable to create account', (error as Error).message ?? 'Please try again.');
+      Alert.alert(
+        "Unable to create account",
+        (error as Error).message ?? "Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -76,7 +79,7 @@ export default function AccountCreationScreen() {
 
   return (
     <ImageBackground
-      source={require('@/assets/images/Background1.2.jpg')}
+      source={require("@/assets/images/Background1.2.jpg")}
       resizeMode="cover"
       style={styles.background}
     >
@@ -86,7 +89,8 @@ export default function AccountCreationScreen() {
             Create Account
           </ThemedText>
           <ThemedText style={styles.copy}>
-            One onboarding flow syncs your biometrics, goals, and identity settings.
+            One onboarding flow syncs your biometrics, goals, and identity
+            settings.
           </ThemedText>
         </View>
 
@@ -141,19 +145,22 @@ export default function AccountCreationScreen() {
           onPress={handleContinue}
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color={palette.buttonPrimaryText} />
-          ) : (
-            <ThemedText
-              style={[styles.primaryText, { color: palette.buttonPrimaryText }]}
-            >
-              Create Account
-            </ThemedText>
-          )}
+          {loading
+            ? <ActivityIndicator color={palette.buttonPrimaryText} />
+            : (
+              <ThemedText
+                style={[styles.primaryText, {
+                  color: palette.buttonPrimaryText,
+                }]}
+              >
+                Create Account
+              </ThemedText>
+            )}
         </Pressable>
 
         <ThemedText style={styles.termsText}>
-          By creating an account, you agree to our Terms of Service and Privacy Policy.
+          By creating an account, you agree to our Terms of Service and Privacy
+          Policy.
         </ThemedText>
       </View>
     </ImageBackground>
@@ -167,7 +174,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingTop: 72,
     paddingBottom: 48,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   header: {
     gap: 12,
@@ -190,24 +197,24 @@ const styles = StyleSheet.create({
   input: {
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.12)',
+    borderBottomColor: "rgba(255,255,255,0.12)",
     fontSize: 16,
   },
   primaryButton: {
     marginTop: 32,
     paddingVertical: 16,
     borderRadius: 22,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryText: {
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 16,
     letterSpacing: 1,
   },
   termsText: {
     fontSize: 12,
     opacity: 0.65,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 18,
   },
 });

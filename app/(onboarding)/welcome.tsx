@@ -1,31 +1,31 @@
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
 import {
   Image,
   ImageBackground,
   Pressable,
   StyleSheet,
-  View,
   useColorScheme,
-} from 'react-native';
+  View,
+} from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
+import { ThemedText } from "@/components/themed-text";
+import { Colors } from "@/constants/theme";
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const scheme = useColorScheme() ?? 'dark';
+  const scheme = useColorScheme() ?? "dark";
   const palette = Colors[scheme];
 
   return (
     <ImageBackground
-      source={require('@/assets/images/Background1.2.jpg')}
+      source={require("@/assets/images/Background1.2.jpg")}
       resizeMode="cover"
       style={styles.background}
     >
       <View style={[styles.overlay, { backgroundColor: palette.overlay }]}>
         <View style={styles.logoBlock}>
           <Image
-            source={require('@/assets/images/helix-logo.png')}
+            source={require("@/assets/images/helix-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -43,12 +43,13 @@ export default function WelcomeScreen() {
               styles.primaryButton,
               { backgroundColor: palette.buttonPrimaryBackground },
             ]}
-            onPress={() => router.push('/(onboarding)/login')}
+            onPress={() => router.push("/(onboarding)/login")}
           >
             <ThemedText
-              style={[styles.primaryLabel, { color: palette.buttonPrimaryText }]}
+              style={[styles.primaryLabel, {
+                color: palette.buttonPrimaryText,
+              }]}
             >
-              
               Login
             </ThemedText>
           </Pressable>
@@ -57,7 +58,7 @@ export default function WelcomeScreen() {
               styles.secondaryButton,
               { borderColor: palette.buttonPrimaryBackground },
             ]}
-            onPress={() => router.push('/(onboarding)/account')}
+            onPress={() => router.push("/(onboarding)/account")}
           >
             <ThemedText
               style={[
@@ -84,12 +85,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 32,
     paddingVertical: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: 40,
   },
   logoBlock: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 8,
   },
   logo: {
@@ -97,50 +98,49 @@ const styles = StyleSheet.create({
     height: 144,
   },
   brand: {
-    marginTop: 0,        // fix: 'marginTop' is case sensitive
+    marginTop: 0, // fix: 'marginTop' is case sensitive
     paddingTop: 24,
-    fontSize: 56,         // shorter / tighter height (was 56)
-    letterSpacing: 6,     // less stretching so it reads cleaner
-    fontWeight: '700',    // lighter weight (works on iOS out of the box)
-    opacity: 1,        // optional: slightyly lighter-looking ink
-    fontcolor: '#f6f6f6',
-
+    fontSize: 56, // shorter / tighter height (was 56)
+    letterSpacing: 6, // less stretching so it reads cleaner
+    fontWeight: "700", // lighter weight (works on iOS out of the box)
+    opacity: 1, // optional: slightyly lighter-looking ink
+    fontcolor: "#f6f6f6",
   },
   tagline: {
     fontSize: 24,
-    fontcolor: '#f6f6f6',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontcolor: "#f6f6f6",
+    textAlign: "center",
+    fontStyle: "italic",
     lineHeight: 26,
     paddingBottom: 30,
   },
   actions: {
-    width: '100%',
+    width: "100%",
     gap: 18,
   },
   primaryButton: {
     paddingVertical: 16,
     borderRadius: 22,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 1,
   },
   secondaryButton: {
     borderWidth: 1.5,
     paddingVertical: 16,
     borderRadius: 22,
-    alignItems: 'center',
+    alignItems: "center",
   },
   secondaryLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 1,
   },
   footer: {
-    marginTop: 'auto',
+    marginTop: "auto",
     fontSize: 12,
     opacity: 0.65,
     letterSpacing: 1,

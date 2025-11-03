@@ -1,53 +1,82 @@
-import { Stack, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Stack, useRouter } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
-const anchors = ['After brushing teeth', 'Post-lunch', 'Pre-workout', 'Before sleep'];
+const anchors = [
+  "After brushing teeth",
+  "Post-lunch",
+  "Pre-workout",
+  "Before sleep",
+];
 const examples = [
-  'Perform 1 minute of diaphragmatic breathing.',
-  'Log 3 gratitude wins.',
-  'Walk 50 deliberate steps.',
-  'Review tomorrow’s plan for 2 minutes.',
+  "Perform 1 minute of diaphragmatic breathing.",
+  "Log 3 gratitude wins.",
+  "Walk 50 deliberate steps.",
+  "Review tomorrow’s plan for 2 minutes.",
 ];
 
 export default function MicroHabitModal() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
   const router = useRouter();
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: 'Micro-Habit Builder' }} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.panel, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <Stack.Screen options={{ title: "Micro-Habit Builder" }} />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.panel, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Design Your Habit</ThemedText>
           <ThemedText style={styles.copy}>
-            Micro-habits pair an anchor, identity statement, and simple action. This modal will eventually write to the `habits` table.
+            Micro-habits pair an anchor, identity statement, and simple action.
+            This modal will eventually write to the `habits` table.
           </ThemedText>
         </View>
 
         <View style={{ gap: 14 }}>
-          <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+          <View
+            style={[styles.card, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
+          >
             <ThemedText type="defaultSemiBold">Choose Anchor</ThemedText>
-            {anchors.map(anchor => (
+            {anchors.map((anchor) => (
               <ThemedText key={anchor} style={styles.item}>
                 • {anchor}
               </ThemedText>
             ))}
           </View>
-          <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+          <View
+            style={[styles.card, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
+          >
             <ThemedText type="defaultSemiBold">Identity Statement</ThemedText>
             <ThemedText style={styles.item}>
               “Because I am a disciplined athlete, I will…”
             </ThemedText>
           </View>
-          <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+          <View
+            style={[styles.card, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
+          >
             <ThemedText type="defaultSemiBold">Action Ideas</ThemedText>
-            {examples.map(example => (
+            {examples.map((example) => (
               <ThemedText key={example} style={styles.item}>
                 • {example}
               </ThemedText>
@@ -87,14 +116,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 24,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#1F6FEB',
+    backgroundColor: "#1F6FEB",
   },
   closeText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });

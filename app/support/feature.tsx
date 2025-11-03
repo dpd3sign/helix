@@ -1,18 +1,26 @@
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 
 export default function FeatureIdeaScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <ThemedText type="subtitle">Submit Feature Idea</ThemedText>
         <ThemedText style={styles.copy}>
-          Capture user ideas for roadmap prioritization. Persist to Supabase `feature_requests` table.
+          Capture user ideas for roadmap prioritization. Persist to Supabase
+          `feature_requests` table.
         </ThemedText>
         <View style={styles.form}>
-          <TextInput style={styles.input} placeholder="Feature Title" placeholderTextColor="#7A8696" />
+          <TextInput
+            style={styles.input}
+            placeholder="Feature Title"
+            placeholderTextColor="#7A8696"
+          />
           <TextInput
             style={[styles.input, styles.textarea]}
             placeholder="Describe your idea"
@@ -39,14 +47,14 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#D8DEE9',
+    borderColor: "#D8DEE9",
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
+    color: "#111827",
   },
   textarea: {
     minHeight: 140,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
 });

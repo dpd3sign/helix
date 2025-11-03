@@ -1,34 +1,55 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const deck = [
-  { identity: 'Athlete Scholar', message: 'Precision builds confidence. Every rep rewires more than muscle.' },
-  { identity: 'Modern Warrior', message: 'Discipline is a decision you make every hour.' },
-  { identity: 'Artisan Performer', message: 'Flow follows unconventional discipline. Move with intent.' },
+  {
+    identity: "Athlete Scholar",
+    message: "Precision builds confidence. Every rep rewires more than muscle.",
+  },
+  {
+    identity: "Modern Warrior",
+    message: "Discipline is a decision you make every hour.",
+  },
+  {
+    identity: "Artisan Performer",
+    message: "Flow follows unconventional discipline. Move with intent.",
+  },
 ];
 
 export default function AffirmationsScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.panel, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.panel, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Affirmation Deck</ThemedText>
           <ThemedText style={styles.copy}>
-            In production, users can favorite, schedule, and create their own affirmations filtered by context trigger.
+            In production, users can favorite, schedule, and create their own
+            affirmations filtered by context trigger.
           </ThemedText>
         </View>
         <View style={styles.deck}>
-          {deck.map(card => (
+          {deck.map((card) => (
             <View
               key={card.identity}
-              style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}
+              style={[styles.card, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
             >
               <ThemedText type="defaultSemiBold">{card.identity}</ThemedText>
               <ThemedText style={styles.message}>{card.message}</ThemedText>

@@ -1,12 +1,12 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { supabase } from '@/lib/supabase';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { supabase } from "@/lib/supabase";
 
 interface WorkoutLog {
   log_id: string;
@@ -28,7 +28,7 @@ interface WorkoutSession {
 }
 
 export default function WorkoutViewScreen() {
-  const palette = Colors[useColorScheme() ?? 'light'];
+  const palette = Colors[useColorScheme() ?? "light"];
   const params = useLocalSearchParams<{ planId?: string }>();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,13 +40,15 @@ export default function WorkoutViewScreen() {
     }
     setLoading(true);
     const { data, error } = await supabase
-      .from('workout_sessions')
-      .select('session_id,date,week_number,status,intensity_score,prescription,focus,notes')
-      .eq('plan_id', params.planId)
-      .order('date', { ascending: true });
+      .from("workout_sessions")
+      .select(
+        "session_id,date,week_number,status,intensity_score,prescription,focus,notes",
+      )
+      .eq("plan_id", params.planId)
+      .order("date", { ascending: true });
 
     if (error) {
-      console.warn('[workouts] fetch error', error.message);
+      console.warn("[workouts] fetch error", error.message);
       setSessions([]);
     } else if (data) {
       setSessions(data as WorkoutSession[]);
@@ -57,40 +59,61 @@ export default function WorkoutViewScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchSessions();
-    }, [fetchSessions])
+    }, [fetchSessions]),
   );
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <ThemedText type="subtitle">Workout Sessions</ThemedText>
         <ThemedText style={styles.copy}>
-          Prescriptions adapt nightly based on readiness. Complete logs sync back to Supabase for progression.
+          Prescriptions adapt nightly based on readiness. Complete logs sync
+          back to Supabase for progression.
         </ThemedText>
 
-        {sessions.length === 0 && !loading ? (
-          <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}> 
-            <ThemedText style={styles.placeholder}>No sessions found for this plan.</ThemedText>
-          </View>
-        ) : null}
+        {sessions.length === 0 && !loading
+          ? (
+            <View
+              style={[styles.card, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
+            >
+              <ThemedText style={styles.placeholder}>
+                No sessions found for this plan.
+              </ThemedText>
+            </View>
+          )
+          : null}
 
         {sessions.map((session) => (
           <View
             key={session.session_id}
-            style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}
+            style={[styles.card, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
           >
             <ThemedText type="defaultSemiBold">
               {new Date(session.date).toLocaleDateString(undefined, {
-                weekday: 'long',
-                month: 'short',
-                day: 'numeric',
+                weekday: "long",
+                month: "short",
+                day: "numeric",
               })}
             </ThemedText>
             <ThemedText style={styles.readiness}>
-              Status: {session.status ?? 'Scheduled'} · Intensity: {session.intensity_score ?? '—'}
+              Status: {session.status ?? "Scheduled"} · Intensity:{" "}
+              {session.intensity_score ?? "—"}
             </ThemedText>
-            <ThemedText style={styles.prescription}>{session.focus ?? session.prescription ?? 'Prescription pending.'}</ThemedText>
-            {session.notes && <ThemedText style={styles.noteCopy}>{session.notes}</ThemedText>}
+            <ThemedText style={styles.prescription}>
+              {session.focus ?? session.prescription ?? "Prescription pending."}
+            </ThemedText>
+            {session.notes && (
+              <ThemedText style={styles.noteCopy}>{session.notes}</ThemedText>
+            )}
           </View>
         ))}
 

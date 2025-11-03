@@ -1,4 +1,7 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import {
+  createClient,
+  type SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 export function getServiceSupabaseClient(): SupabaseClient {
   const url = Deno.env.get("SUPABASE_URL");

@@ -1,38 +1,50 @@
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { supabase } from '@/lib/supabase';
-import { useOnboarding } from '@/providers/onboarding-provider';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { supabase } from "@/lib/supabase";
+import { useOnboarding } from "@/providers/onboarding-provider";
 
 const archetypes = [
   {
-    name: 'Athlete Scholar',
-    description: 'Analytical training with intellectual curiosity.',
-    microHabit: 'Log one insight after each workout to compound awareness.',
+    name: "Athlete Scholar",
+    description: "Analytical training with intellectual curiosity.",
+    microHabit: "Log one insight after each workout to compound awareness.",
   },
   {
-    name: 'Modern Warrior',
-    description: 'Discipline, strength, and stoic mindset.',
-    microHabit: 'Perform 60 seconds of box breathing before training.',
+    name: "Modern Warrior",
+    description: "Discipline, strength, and stoic mindset.",
+    microHabit: "Perform 60 seconds of box breathing before training.",
   },
   {
-    name: 'Artisan Performer',
-    description: 'Movement as art, focus on flow and precision.',
-    microHabit: 'Review tempo cues aloud before top sets.',
+    name: "Artisan Performer",
+    description: "Movement as art, focus on flow and precision.",
+    microHabit: "Review tempo cues aloud before top sets.",
   },
 ];
 
-const activityMultiplier: Record<'sedentary' | 'light' | 'moderate' | 'high', number> = {
+const activityMultiplier: Record<
+  "sedentary" | "light" | "moderate" | "high",
+  number
+> = {
   sedentary: 1.2,
   light: 1.375,
   moderate: 1.55,
   high: 1.725,
 };
 
-const calorieBump: Record<'recomposition' | 'strength_gain' | 'cutting' | 'endurance', number> = {
+const calorieBump: Record<
+  "recomposition" | "strength_gain" | "cutting" | "endurance",
+  number
+> = {
   recomposition: 0,
   strength_gain: 250,
   cutting: -350,
@@ -41,7 +53,8 @@ const calorieBump: Record<'recomposition' | 'strength_gain' | 'cutting' | 'endur
 
 export default function IdentityFramingScreen() {
   const router = useRouter();
-  const { account, profile, baseline, goals, setIdentityArchetype, reset } = useOnboarding();
+  const { account, profile, baseline, goals, setIdentityArchetype, reset } =
+    useOnboarding();
   const [selected, setSelected] = useState(archetypes[0]);
   const [loading, setLoading] = useState(false);
 
@@ -54,7 +67,10 @@ export default function IdentityFramingScreen() {
 
   const finishOnboarding = async () => {
     if (!account?.userId || !profile || !baseline || !goals) {
-      Alert.alert('Missing data', 'Complete previous steps before finishing onboarding.');
+      Alert.alert(
+        "Missing data",
+        "Complete previous steps before finishing onboarding.",
+      );
       return;
     }
 
@@ -62,7 +78,7 @@ export default function IdentityFramingScreen() {
 
     const { heightCm, weightKg, sex, activityLevel, timezone } = profile;
 
-    const s = sex === 'male' ? 5 : -161;
+    const s = sex === "male" ? 5 : -161;
     const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + s;
     const activity = activityMultiplier[activityLevel];
     const tdee = bmr * activity;
@@ -108,23 +124,31 @@ export default function IdentityFramingScreen() {
         macro_targets: macroTargets,
       };
 
-      const { error: profileError } = await supabase.from('profiles').upsert(profilePayload);
+      const { error: profileError } = await supabase.from("profiles").upsert(
+        profilePayload,
+      );
       if (profileError) throw profileError;
 
       const { error: baselineError } = await supabase
-        .from('biometric_baselines')
+        .from("biometric_baselines")
         .upsert(baselinePayload);
       if (baselineError) throw baselineError;
 
-      await supabase.functions.invoke('generate-weekly-plan', {
+      await supabase.functions.invoke("generate-weekly-plan", {
         body: { user_id: account.userId },
       });
 
-      Alert.alert('Welcome to HELIX', 'Baseline saved. Your adaptive plan will populate shortly.');
+      Alert.alert(
+        "Welcome to HELIX",
+        "Baseline saved. Your adaptive plan will populate shortly.",
+      );
       reset();
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     } catch (error) {
-      Alert.alert('Failed to save profile', (error as Error).message ?? 'Please try again.');
+      Alert.alert(
+        "Failed to save profile",
+        (error as Error).message ?? "Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -134,7 +158,9 @@ export default function IdentityFramingScreen() {
     <ThemedView style={styles.container}>
       <ThemedText type="subtitle">Identity Framing</ThemedText>
       <ThemedText style={styles.copy}>
-        Choose the archetype that best reflects who you are becoming. Micro-habits, affirmations, and the AI coach voice will adapt around this choice.
+        Choose the archetype that best reflects who you are becoming.
+        Micro-habits, affirmations, and the AI coach voice will adapt around
+        this choice.
       </ThemedText>
 
       <View style={styles.stack}>
@@ -147,21 +173,31 @@ export default function IdentityFramingScreen() {
               onPress={() => setSelected(archetype)}
             >
               <ThemedText type="defaultSemiBold">{archetype.name}</ThemedText>
-              <ThemedText style={styles.cardCopy}>{archetype.description}</ThemedText>
+              <ThemedText style={styles.cardCopy}>
+                {archetype.description}
+              </ThemedText>
               <View style={styles.microAction}>
-                <ThemedText style={styles.microText}>{archetype.microHabit}</ThemedText>
+                <ThemedText style={styles.microText}>
+                  {archetype.microHabit}
+                </ThemedText>
               </View>
             </Pressable>
           );
         })}
       </View>
 
-      <Pressable style={styles.finishButton} onPress={finishOnboarding} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <ThemedText style={styles.finishText}>Finish Onboarding</ThemedText>
-        )}
+      <Pressable
+        style={styles.finishButton}
+        onPress={finishOnboarding}
+        disabled={loading}
+      >
+        {loading
+          ? <ActivityIndicator color="#FFFFFF" />
+          : (
+            <ThemedText style={styles.finishText}>
+              Finish Onboarding
+            </ThemedText>
+          )}
       </Pressable>
     </ThemedView>
   );
@@ -183,13 +219,13 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E0E6F0',
+    borderColor: "#E0E6F0",
     padding: 18,
     gap: 10,
   },
   cardActive: {
-    borderColor: '#1F6FEB',
-    backgroundColor: '#1F6FEB14',
+    borderColor: "#1F6FEB",
+    backgroundColor: "#1F6FEB14",
   },
   cardCopy: {
     lineHeight: 20,
@@ -199,24 +235,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
-    backgroundColor: '#1F6FEB12',
+    backgroundColor: "#1F6FEB12",
   },
   microText: {
     fontSize: 13,
-    color: '#1F6FEB',
-    fontWeight: '600',
+    color: "#1F6FEB",
+    fontWeight: "600",
   },
   finishButton: {
-    marginTop: 'auto',
-    alignSelf: 'flex-end',
+    marginTop: "auto",
+    alignSelf: "flex-end",
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 16,
-    backgroundColor: '#1F6FEB',
+    backgroundColor: "#1F6FEB",
   },
   finishText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
     fontSize: 16,
   },
 });

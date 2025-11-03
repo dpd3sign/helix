@@ -1,47 +1,56 @@
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const responseExamples = [
   {
-    heading: 'Fatigue Check-in',
+    heading: "Fatigue Check-in",
     message:
-      '“Your HRV is tracking 8% below baseline and sleep slipped to 6h12m. Let’s trade the heavy press session for mobility and keep carbs higher tonight.”',
+      "“Your HRV is tracking 8% below baseline and sleep slipped to 6h12m. Let’s trade the heavy press session for mobility and keep carbs higher tonight.”",
   },
   {
-    heading: 'Identity Reinforcement',
+    heading: "Identity Reinforcement",
     message:
-      '“You executed every micro-habit yesterday. That’s exactly how a disciplined athlete thinks—keep stacking the evidence.”',
+      "“You executed every micro-habit yesterday. That’s exactly how a disciplined athlete thinks—keep stacking the evidence.”",
   },
   {
-    heading: 'Cognitive Reappraisal',
+    heading: "Cognitive Reappraisal",
     message:
-      '“What else might yesterday’s missed workout mean? Perhaps proof that you can reset quickly. Let’s map a minimal session you can complete in 15 minutes.”',
+      "“What else might yesterday’s missed workout mean? Perhaps proof that you can reset quickly. Let’s map a minimal session you can complete in 15 minutes.”",
   },
 ];
 
 const buildSteps = [
-  'Set up embeddings table (`coach_memory`) and pgvector extension.',
-  'Wire Supabase Edge Function to Anthropic/OpenAI with tone guardrails.',
-  'Create scripted dialogues for regression tests.',
-  'Integrate coach transcript viewer with offline persistence.',
+  "Set up embeddings table (`coach_memory`) and pgvector extension.",
+  "Wire Supabase Edge Function to Anthropic/OpenAI with tone guardrails.",
+  "Create scripted dialogues for regression tests.",
+  "Integrate coach transcript viewer with offline persistence.",
 ];
 
 export default function CoachScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.headerCard, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.headerCard, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">AI Coach Blueprint</ThemedText>
           <ThemedText style={styles.headerCopy}>
-            Quietly confident, identity-anchored guidance that fuses biometrics, habits, and mindset cues.
+            Quietly confident, identity-anchored guidance that fuses biometrics,
+            habits, and mindset cues.
           </ThemedText>
         </View>
 
@@ -53,16 +62,21 @@ export default function CoachScreen() {
         </View>
 
         <View style={styles.examples}>
-          {responseExamples.map(example => (
+          {responseExamples.map((example) => (
             <View
               key={example.heading}
               style={[
                 styles.exampleCard,
-                { backgroundColor: palette.surface, borderColor: palette.borderMuted },
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.borderMuted,
+                },
               ]}
             >
               <ThemedText type="defaultSemiBold">{example.heading}</ThemedText>
-              <ThemedText style={styles.exampleMessage}>{example.message}</ThemedText>
+              <ThemedText style={styles.exampleMessage}>
+                {example.message}
+              </ThemedText>
             </View>
           ))}
         </View>
@@ -75,12 +89,15 @@ export default function CoachScreen() {
         </View>
 
         <View style={styles.checklist}>
-          {buildSteps.map(step => (
+          {buildSteps.map((step) => (
             <View
               key={step}
               style={[
                 styles.checklistItem,
-                { backgroundColor: palette.surface, borderColor: palette.borderMuted },
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.borderMuted,
+                },
               ]}
             >
               <Ionicons name="bulb-outline" size={18} color={palette.tint} />
@@ -134,8 +151,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   checklistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     borderRadius: 16,
     borderWidth: 1,

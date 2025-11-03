@@ -1,47 +1,60 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const prompts = [
   {
-    title: 'Morning Alignment',
-    prompt: 'What identity-driven win will you create today?',
-    note: 'Store entry in `journal_entries` with prompt reference and mood rating.',
+    title: "Morning Alignment",
+    prompt: "What identity-driven win will you create today?",
+    note:
+      "Store entry in `journal_entries` with prompt reference and mood rating.",
   },
   {
-    title: 'Midday Reflection',
-    prompt: 'Where did you notice resistance? How can you reframe it?',
-    note: 'Triggers cognitive reappraisal helper if mood dips.',
+    title: "Midday Reflection",
+    prompt: "Where did you notice resistance? How can you reframe it?",
+    note: "Triggers cognitive reappraisal helper if mood dips.",
   },
   {
-    title: 'Evening Debrief',
-    prompt: 'Which actions proved you are becoming your chosen identity?',
-    note: 'Feeds confidence index calculation.',
+    title: "Evening Debrief",
+    prompt: "Which actions proved you are becoming your chosen identity?",
+    note: "Feeds confidence index calculation.",
   },
 ];
 
 export default function JournalScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.panel, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.panel, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Reflection Journal</ThemedText>
           <ThemedText style={styles.copy}>
-            Users can log text or voice notes synced offline. Entries will trigger reappraisal flows when mood is negative.
+            Users can log text or voice notes synced offline. Entries will
+            trigger reappraisal flows when mood is negative.
           </ThemedText>
         </View>
 
         <View style={styles.stack}>
-          {prompts.map(item => (
+          {prompts.map((item) => (
             <View
               key={item.title}
-              style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}
+              style={[styles.card, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
             >
               <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
               <ThemedText style={styles.prompt}>{item.prompt}</ThemedText>

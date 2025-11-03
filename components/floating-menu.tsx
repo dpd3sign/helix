@@ -1,17 +1,17 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
   StyleSheet,
-  View,
   useColorScheme,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Colors } from '@/constants/theme';
-import { ThemedText } from '@/components/themed-text';
+import { Colors } from "@/constants/theme";
+import { ThemedText } from "@/components/themed-text";
 
 type MenuItem = {
   label: string;
@@ -20,18 +20,18 @@ type MenuItem = {
 };
 
 const items: MenuItem[] = [
-  { label: 'Profile Overview', href: '/profile' },
-  { label: 'Manage Devices', href: '/profile/devices' },
-  { label: 'Notifications & Preferences', href: '/profile/preferences' },
-  { label: 'Subscriptions & Billing', href: '/profile/billing' },
-  { label: 'Help Center', href: '/support' },
-  { label: 'Submit Feature Idea', href: '/support/feature' },
+  { label: "Profile Overview", href: "/profile" },
+  { label: "Manage Devices", href: "/profile/devices" },
+  { label: "Notifications & Preferences", href: "/profile/preferences" },
+  { label: "Subscriptions & Billing", href: "/profile/billing" },
+  { label: "Help Center", href: "/support" },
+  { label: "Submit Feature Idea", href: "/support/feature" },
 ];
 
 export function FloatingMenu() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const scheme = useColorScheme() ?? 'dark';
+  const scheme = useColorScheme() ?? "dark";
   const palette = Colors[scheme];
   const insets = useSafeAreaInsets();
 
@@ -47,7 +47,10 @@ export function FloatingMenu() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Open HELIX menu"
-        style={[styles.trigger, { backgroundColor: palette.inputBackground, borderColor: palette.inputBorder }]}
+        style={[styles.trigger, {
+          backgroundColor: palette.inputBackground,
+          borderColor: palette.inputBorder,
+        }]}
         onPress={() => setOpen(true)}
       >
         <Ionicons name="menu-outline" size={20} color={palette.text} />
@@ -71,16 +74,20 @@ export function FloatingMenu() {
             },
           ]}
         >
-          {menuItems.map(item => (
+          {menuItems.map((item) => (
             <Pressable
               key={item.href}
               style={styles.menuItem}
               onPress={() => handleNavigate(item.href)}
             >
               <ThemedText type="defaultSemiBold">{item.label}</ThemedText>
-              {item.description ? (
-                <ThemedText style={styles.menuDescription}>{item.description}</ThemedText>
-              ) : null}
+              {item.description
+                ? (
+                  <ThemedText style={styles.menuDescription}>
+                    {item.description}
+                  </ThemedText>
+                )
+                : null}
             </Pressable>
           ))}
         </View>
@@ -94,16 +101,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   sheet: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     borderRadius: 18,
     borderWidth: 1,

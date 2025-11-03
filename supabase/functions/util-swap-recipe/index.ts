@@ -55,7 +55,10 @@ type SwapRecipeResponse = {
   error?: string;
 };
 
-async function fetchPlanDay(client: SupabaseClient, planDayId: string): Promise<PlanDayRow | null> {
+async function fetchPlanDay(
+  client: SupabaseClient,
+  planDayId: string,
+): Promise<PlanDayRow | null> {
   const { data, error } = await client
     .from("plan_days")
     .select("id, plan_id, adjustments_made")
@@ -73,7 +76,9 @@ async function fetchMeal(
 ): Promise<MealRow | null> {
   let query = client
     .from("meals")
-    .select("id, plan_day_id, name, meal_type, kcal, protein_g, carbs_g, fat_g, recipe_id")
+    .select(
+      "id, plan_day_id, name, meal_type, kcal, protein_g, carbs_g, fat_g, recipe_id",
+    )
     .eq("plan_day_id", planDayId)
     .eq("recipe_id", recipeId)
     .limit(1);
@@ -87,7 +92,10 @@ async function fetchMeal(
   return data;
 }
 
-async function fetchRecipe(client: SupabaseClient, id: string): Promise<RecipeRow | null> {
+async function fetchRecipe(
+  client: SupabaseClient,
+  id: string,
+): Promise<RecipeRow | null> {
   const { data, error } = await client
     .from("recipes")
     .select("id, name, kcal, protein_g, carbs_g, fat_g, diet_type, tags")
@@ -107,22 +115,34 @@ function buildRecipeWhy(oldRecipe: RecipeRow, newRecipe: RecipeRow): string {
 
   if (deltaProtein !== 0) {
     const direction = deltaProtein > 0 ? "adds" : "reduces";
-    parts.push(`${direction} ${Math.abs(deltaProtein)}g protein to support the day's macro target.`);
+    parts.push(
+      `${direction} ${
+        Math.abs(deltaProtein)
+      }g protein to support the day's macro target.`,
+    );
   }
 
   if (deltaCalories !== 0) {
     const direction = deltaCalories > 0 ? "adds" : "removes";
-    parts.push(`${direction} ${Math.abs(deltaCalories)} kcal to keep energy aligned with the plan.`);
+    parts.push(
+      `${direction} ${
+        Math.abs(deltaCalories)
+      } kcal to keep energy aligned with the plan.`,
+    );
   }
 
   if (newRecipe.diet_type !== oldRecipe.diet_type) {
-    parts.push(`Aligns with the ${newRecipe.diet_type} preference for this phase.`);
+    parts.push(
+      `Aligns with the ${newRecipe.diet_type} preference for this phase.`,
+    );
   }
 
   return buildWhySentence(parts);
 }
 
-async function swapRecipe(data: SwapRecipeRequest): Promise<SwapRecipeResponse> {
+async function swapRecipe(
+  data: SwapRecipeRequest,
+): Promise<SwapRecipeResponse> {
   if (!data.plan_day_id || !data.from_recipe_id || !data.to_recipe_id) {
     return { ok: false, error: "Missing required fields." };
   }
@@ -133,7 +153,12 @@ async function swapRecipe(data: SwapRecipeRequest): Promise<SwapRecipeResponse> 
     return { ok: false, error: "Plan day not found." };
   }
 
-  const meal = await fetchMeal(client, data.plan_day_id, data.from_recipe_id, data.meal_type);
+  const meal = await fetchMeal(
+    client,
+    data.plan_day_id,
+    data.from_recipe_id,
+    data.meal_type,
+  );
   if (!meal) {
     return { ok: false, error: "Meal with the specified recipe not found." };
   }
@@ -174,7 +199,10 @@ async function swapRecipe(data: SwapRecipeRequest): Promise<SwapRecipeResponse> 
   await client
     .from("plan_days")
     .update({
-      adjustments_made: appendAdjustment(planDay.adjustments_made, adjustmentEntry),
+      adjustments_made: appendAdjustment(
+        planDay.adjustments_made,
+        adjustmentEntry,
+      ),
     })
     .eq("id", planDay.id);
 
@@ -205,7 +233,9 @@ async function swapRecipe(data: SwapRecipeRequest): Promise<SwapRecipeResponse> 
   };
 }
 
-export async function handleSwapRecipe(body: SwapRecipeRequest): Promise<SwapRecipeResponse> {
+export async function handleSwapRecipe(
+  body: SwapRecipeRequest,
+): Promise<SwapRecipeResponse> {
   try {
     return await swapRecipe(body);
   } catch (error) {
@@ -224,7 +254,10 @@ if (import.meta.main) {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: corsHeaders,
+      });
     }
 
     const body = await req.json().catch(() => ({})) as SwapRecipeRequest;

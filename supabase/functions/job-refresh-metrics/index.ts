@@ -3,8 +3,8 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4
 
 import {
   corsHeaders,
-  runJob,
   type JobLogicResult,
+  runJob,
   type RunJobResponse,
   type RunType,
 } from "../_shared/job-utils.ts";
@@ -40,7 +40,10 @@ async function refreshMetrics(client: SupabaseClient): Promise<JobLogicResult> {
   };
 }
 
-async function execute(runType: RunType, userId?: string | null): Promise<RunJobResponse> {
+async function execute(
+  runType: RunType,
+  userId?: string | null,
+): Promise<RunJobResponse> {
   return await runJob(
     JOB_KEY,
     runType,
@@ -68,7 +71,10 @@ function buildResponsePayload(result: RunJobResponse) {
   };
 }
 
-export async function runRefreshMetricsJob(runType: RunType, userId?: string | null) {
+export async function runRefreshMetricsJob(
+  runType: RunType,
+  userId?: string | null,
+) {
   return await execute(runType, userId);
 }
 
@@ -79,7 +85,10 @@ if (import.meta.main) {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: corsHeaders,
+      });
     }
 
     const isCron = req.headers.get("x-supabase-cron") === "true";

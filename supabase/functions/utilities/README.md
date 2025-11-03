@@ -1,15 +1,20 @@
 # HELIX Utility Endpoints
 
-This folder contains the explainable plan utilities requested in Phase 2 Step 2.1:
+This folder contains the explainable plan utilities requested in Phase 2
+Step 2.1:
 
 - `util-swap-exercise` — replace an exercise inside a plan day workout.
 - `util-swap-recipe` — replace the recipe attached to a meal.
-- `util-export-grocery` — aggregate ingredients across a plan’s meals for export.
+- `util-export-grocery` — aggregate ingredients across a plan’s meals for
+  export.
 
 All utilities:
+
 1. Operate with the Supabase service-role key (RLS-safe).
-2. Append a record to `audit_regenerations` with a structured `delta` JSON payload.
-3. Return a narrative `why` string so the client can surface the exact reasoning.
+2. Append a record to `audit_regenerations` with a structured `delta` JSON
+   payload.
+3. Return a narrative `why` string so the client can surface the exact
+   reasoning.
 
 ## Deploy & Trigger
 
@@ -54,9 +59,11 @@ deno test -A supabase/functions/utilities/utilities.test.ts
 ```
 
 The tests:
+
 1. Create a temporary user + plan.
 2. Exercise each utility.
-3. Verify the affected row is updated and an `audit_regenerations` record exists.
+3. Verify the affected row is updated and an `audit_regenerations` record
+   exists.
 4. Clean up temporary data.
 
 ## Querying audits
@@ -68,4 +75,5 @@ where plan_id = '<plan-id>'
 order by occurred_at desc;
 ```
 
-`delta` includes a `why` field mirroring the response so downstream analytics can analyse behavior.
+`delta` includes a `why` field mirroring the response so downstream analytics
+can analyse behavior.

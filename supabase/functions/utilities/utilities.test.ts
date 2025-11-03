@@ -10,12 +10,15 @@ import { handleSwapRecipe } from "../util-swap-recipe/index.ts";
 import { handleExportGrocery } from "../util-export-grocery/index.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
 const shouldSkip = SUPABASE_SERVICE_ROLE_KEY.length === 0;
 
 const client = shouldSkip
   ? null
-  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
 
 async function createTestUser() {
   if (!client) return null;
@@ -103,7 +106,11 @@ async function getTwoRecipes() {
   return data;
 }
 
-async function insertWorkout(planDayId: string, exerciseId: string, exerciseName: string) {
+async function insertWorkout(
+  planDayId: string,
+  exerciseId: string,
+  exerciseName: string,
+) {
   if (!client) throw new Error("Client not initialised");
   const block = [
     {
@@ -132,7 +139,17 @@ async function insertWorkout(planDayId: string, exerciseId: string, exerciseName
   return data.id as string;
 }
 
-async function insertMeal(planDayId: string, recipe: { id: string; name: string; kcal: number; protein_g: number; carbs_g: number; fat_g: number; }) {
+async function insertMeal(
+  planDayId: string,
+  recipe: {
+    id: string;
+    name: string;
+    kcal: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  },
+) {
   if (!client) throw new Error("Client not initialised");
   const { data, error } = await client
     .from("meals")
@@ -191,7 +208,10 @@ Deno.test({
       assert(result.blocks, "blocks missing in response");
       assertStringIncludes(result.why ?? "", toExercise.name);
 
-      const workout = await client!.from("workouts").select("blocks").eq("id", result.workout_id!).single();
+      const workout = await client!.from("workouts").select("blocks").eq(
+        "id",
+        result.workout_id!,
+      ).single();
       assert(workout.data, "Workout not found after swap");
       const blocks = workout.data.blocks as unknown[];
       const hasReplacement = JSON.stringify(blocks).includes(toExercise.id);
@@ -261,7 +281,10 @@ Deno.test({
     try {
       const result = await handleExportGrocery({ plan_id: planId });
       assert(result.ok, `export_grocery_list failed: ${result.error}`);
-      assert(result.items && result.items.length > 0, "No grocery items returned");
+      assert(
+        result.items && result.items.length > 0,
+        "No grocery items returned",
+      );
       assertStringIncludes(result.why ?? "", "Exported grocery list");
 
       const audit = await fetchLatestAudit(planId);

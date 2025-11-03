@@ -1,25 +1,28 @@
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 
 const preferences = [
-  'Daily readiness notification',
-  'Meal plan adjustments',
-  'Mindset prompts',
-  'Weekly progress summary email',
+  "Daily readiness notification",
+  "Meal plan adjustments",
+  "Mindset prompts",
+  "Weekly progress summary email",
 ];
 
 export default function PreferencesScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <ThemedText type="subtitle">Notifications & Preferences</ThemedText>
         <ThemedText style={styles.copy}>
           Tie these toggles into Supabase `user_settings` table.
         </ThemedText>
         <View style={styles.list}>
-          {preferences.map(pref => (
+          {preferences.map((pref) => (
             <View key={pref} style={styles.row}>
               <ThemedText>{pref}</ThemedText>
               <Switch value={false} />
@@ -43,11 +46,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#D8DEE9',
+    borderBottomColor: "#D8DEE9",
   },
 });

@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack } from "expo-router";
 
 export default function OnboardingLayout() {
   return (
@@ -6,42 +6,42 @@ export default function OnboardingLayout() {
       screenOptions={{
         headerShown: true,
         headerBackTitleVisible: false,
-        headerTitleStyle: { fontWeight: '600' },
+        headerTitleStyle: { fontWeight: "600" },
       }}
     >
       <Stack.Screen
         name="welcome"
-        options={{ title: 'Welcome to HELIX' }}
+        options={{ title: "Welcome to HELIX" }}
       />
       <Stack.Screen
         name="login"
-        options={{ title: 'Log In' }}
+        options={{ title: "Log In" }}
       />
       <Stack.Screen
         name="account"
-        options={{ title: 'Create Account' }}
+        options={{ title: "Create Account" }}
       />
       <Stack.Screen
         name="initial-questions"
-        options={{ title: 'Your Baseline' }}
+        options={{ title: "Your Baseline" }}
       />
       <Stack.Screen
         name="goals-equipment"
-        options={{ title: 'Goals & Equipment' }}
+        options={{ title: "Goals & Equipment" }}
       />
       <Stack.Screen
         name="wearable-sync"
-        options={{ title: 'Connect Wearables' }}
+        options={{ title: "Connect Wearables" }}
       />
       <Stack.Screen
         name="identity-framing"
-        options={{ title: 'Identity Alignment' }}
+        options={{ title: "Identity Alignment" }}
       />
       <Stack.Screen
         name="wearable-permissions"
         options={{
-          title: 'Enable Permissions',
-          presentation: 'modal',
+          title: "Enable Permissions",
+          presentation: "modal",
         }}
       />
     </Stack>

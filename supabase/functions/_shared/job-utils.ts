@@ -1,4 +1,8 @@
-import { createClient, type PostgrestSingleResponse, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
+import {
+  createClient,
+  type PostgrestSingleResponse,
+  type SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 export type RunType = "manual" | "cron";
 
@@ -32,13 +36,18 @@ export interface JobContext {
   runType: RunType;
 }
 
-export type JobLogic = (client: SupabaseClient, context: JobContext) => Promise<JobLogicResult>;
+export type JobLogic = (
+  client: SupabaseClient,
+  context: JobContext,
+) => Promise<JobLogicResult>;
 
 function ensureEnv(): { url: string; serviceRoleKey: string } {
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for job execution.");
+    throw new Error(
+      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for job execution.",
+    );
   }
   return { url, serviceRoleKey: key };
 }
@@ -72,7 +81,9 @@ export async function runJob(
   options: RunJobOptions = {},
 ): Promise<RunJobResponse> {
   const { url, serviceRoleKey } = ensureEnv();
-  const client = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+  const client = createClient(url, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
 
   const startedAt = new Date();
 
@@ -119,7 +130,10 @@ export async function runJob(
   const insertResponse = await insertJobRun(client, insertPayload);
 
   if (insertResponse.error) {
-    console.error(`[${jobKey}] failed to write job_runs entry`, insertResponse.error);
+    console.error(
+      `[${jobKey}] failed to write job_runs entry`,
+      insertResponse.error,
+    );
     notes.push("Unable to persist job_runs entry; check logs.");
   } else if (insertResponse.data?.id) {
     jobRunId = insertResponse.data.id;
@@ -141,6 +155,7 @@ export async function runJob(
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };

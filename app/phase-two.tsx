@@ -1,41 +1,59 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const expansions = [
   {
-    title: '3D Physique Visualizer',
-    detail: 'Integrate scanning hardware or manual measurements to interpolate body model updates.',
+    title: "3D Physique Visualizer",
+    detail:
+      "Integrate scanning hardware or manual measurements to interpolate body model updates.",
   },
   {
-    title: 'Social Accountability',
-    detail: 'Partner connection, shared progress snapshots, and encouragement nudges.',
+    title: "Social Accountability",
+    detail:
+      "Partner connection, shared progress snapshots, and encouragement nudges.",
   },
   {
-    title: 'DAPPER Sync Module',
-    detail: 'Supplements and skincare ritual integration for holistic identity upkeep.',
+    title: "DAPPER Sync Module",
+    detail:
+      "Supplements and skincare ritual integration for holistic identity upkeep.",
   },
 ];
 
 export default function PhaseTwoScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.hero, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.hero, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Phase 2 Expansion</ThemedText>
           <ThemedText style={styles.copy}>
-            Future roadmap modules extend HELIX into social accountability and advanced physique visualization.
+            Future roadmap modules extend HELIX into social accountability and
+            advanced physique visualization.
           </ThemedText>
         </View>
         <View style={styles.stack}>
-          {expansions.map(item => (
-            <View key={item.title} style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+          {expansions.map((item) => (
+            <View
+              key={item.title}
+              style={[styles.card, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
+            >
               <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
               <ThemedText style={styles.copy}>{item.detail}</ThemedText>
             </View>

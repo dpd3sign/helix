@@ -3,8 +3,8 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4
 
 import {
   corsHeaders,
-  runJob,
   type JobLogicResult,
+  runJob,
   type RunJobResponse,
   type RunType,
 } from "../_shared/job-utils.ts";
@@ -24,7 +24,9 @@ async function performSync(client: SupabaseClient): Promise<JobLogicResult> {
 
       // treat missing RPC as a soft success so we can enable the schedule before integrations land.
       if (missingFunction) {
-        notes.push("sync_wearables RPC not configured yet; recorded placeholder run.");
+        notes.push(
+          "sync_wearables RPC not configured yet; recorded placeholder run.",
+        );
         return {
           status: "success",
           reason: "Wearable sync placeholder run (RPC not configured).",
@@ -41,7 +43,9 @@ async function performSync(client: SupabaseClient): Promise<JobLogicResult> {
       ? data.length
       : 0;
 
-    notes.push(`sync_wearables RPC executed (${rowsAffected} records processed).`);
+    notes.push(
+      `sync_wearables RPC executed (${rowsAffected} records processed).`,
+    );
     return {
       status: "success",
       reason: "Wearable integrations refreshed via sync_wearables RPC.",
@@ -50,7 +54,9 @@ async function performSync(client: SupabaseClient): Promise<JobLogicResult> {
     };
   } catch (error) {
     console.error("[sync_wearables] RPC error", error);
-    notes.push("sync_wearables RPC threw an error; see error_detail for context.");
+    notes.push(
+      "sync_wearables RPC threw an error; see error_detail for context.",
+    );
     return {
       status: "failure",
       reason: "sync_wearables RPC failed.",
@@ -65,7 +71,10 @@ async function performSync(client: SupabaseClient): Promise<JobLogicResult> {
   }
 }
 
-async function execute(runType: RunType, userId?: string | null): Promise<RunJobResponse> {
+async function execute(
+  runType: RunType,
+  userId?: string | null,
+): Promise<RunJobResponse> {
   return await runJob(
     JOB_KEY,
     runType,
@@ -93,7 +102,10 @@ function buildResponsePayload(result: RunJobResponse) {
   };
 }
 
-export async function runSyncWearablesJob(runType: RunType, userId?: string | null) {
+export async function runSyncWearablesJob(
+  runType: RunType,
+  userId?: string | null,
+) {
   return await execute(runType, userId);
 }
 
@@ -104,7 +116,10 @@ if (import.meta.main) {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: corsHeaders,
+      });
     }
 
     const isCron = req.headers.get("x-supabase-cron") === "true";

@@ -1,10 +1,10 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useSupabaseView } from '@/hooks/use-supabase-view';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useSupabaseView } from "@/hooks/use-supabase-view";
 
 interface MindsetRow {
   date: string;
@@ -15,41 +15,70 @@ interface MindsetRow {
 }
 
 export default function MindsetMetricsScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
-  const { data } = useSupabaseView<MindsetRow>('mv_mindset_confidence', {
-    order: { column: 'date', ascending: false },
+  const { data } = useSupabaseView<MindsetRow>("mv_mindset_confidence", {
+    order: { column: "date", ascending: false },
     limit: 14,
   });
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Mindset Metrics</ThemedText>
           <ThemedText style={styles.copy}>
-            Coach tone adapts to confidence trends, sentiment, and habit adherence. Maintain streaks to keep reinforcement in the Goldilocks zone.
+            Coach tone adapts to confidence trends, sentiment, and habit
+            adherence. Maintain streaks to keep reinforcement in the Goldilocks
+            zone.
           </ThemedText>
         </View>
 
         {data.map((entry) => (
           <View
             key={entry.date}
-            style={[styles.metricCard, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}
+            style={[styles.metricCard, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
           >
             <ThemedText type="defaultSemiBold">
-              {new Date(entry.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+              {new Date(entry.date).toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
             </ThemedText>
             <ThemedText style={styles.detail}>
-              Confidence {entry.confidence_index?.toFixed(0) ?? '—'} · Sentiment {entry.sentiment_score?.toFixed(1) ?? '—'} · Journal {entry.journal_entries ?? '—'}
+              Confidence {entry.confidence_index?.toFixed(0) ?? "—"} · Sentiment
+              {" "}
+              {entry.sentiment_score?.toFixed(1) ?? "—"} · Journal{" "}
+              {entry.journal_entries ?? "—"}
             </ThemedText>
-            <ThemedText style={styles.detail}>Habit adherence {entry.habit_adherence?.toFixed(0) ?? '—'}%</ThemedText>
+            <ThemedText style={styles.detail}>
+              Habit adherence {entry.habit_adherence?.toFixed(0) ?? "—"}%
+            </ThemedText>
           </View>
         ))}
 
         {data.length === 0 && (
-          <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
-            <ThemedText style={styles.placeholder}>Complete check-ins and journal entries to populate this dashboard.</ThemedText>
+          <View
+            style={[styles.card, {
+              backgroundColor: palette.surface,
+              borderColor: palette.borderMuted,
+            }]}
+          >
+            <ThemedText style={styles.placeholder}>
+              Complete check-ins and journal entries to populate this dashboard.
+            </ThemedText>
           </View>
         )}
       </ScrollView>

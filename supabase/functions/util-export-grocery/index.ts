@@ -2,7 +2,11 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 import { corsHeaders } from "../_shared/job-utils.ts";
-import { buildWhySentence, getServiceSupabaseClient, logPlanAudit } from "../_shared/plan-utils.ts";
+import {
+  buildWhySentence,
+  getServiceSupabaseClient,
+  logPlanAudit,
+} from "../_shared/plan-utils.ts";
 
 type ExportRequest = {
   plan_id: string;
@@ -45,7 +49,10 @@ type ExportResponse = {
   error?: string;
 };
 
-async function fetchPlan(client: SupabaseClient, planId: string): Promise<PlanRow | null> {
+async function fetchPlan(
+  client: SupabaseClient,
+  planId: string,
+): Promise<PlanRow | null> {
   const { data, error } = await client
     .from("plans")
     .select("id, start_date")
@@ -55,7 +62,10 @@ async function fetchPlan(client: SupabaseClient, planId: string): Promise<PlanRo
   return data;
 }
 
-async function fetchPlanDays(client: SupabaseClient, planId: string): Promise<PlanDayRow[]> {
+async function fetchPlanDays(
+  client: SupabaseClient,
+  planId: string,
+): Promise<PlanDayRow[]> {
   const { data, error } = await client
     .from("plan_days")
     .select("id, date")
@@ -64,11 +74,16 @@ async function fetchPlanDays(client: SupabaseClient, planId: string): Promise<Pl
   return data ?? [];
 }
 
-async function fetchMeals(client: SupabaseClient, planDayIds: string[]): Promise<MealWithRecipe[]> {
+async function fetchMeals(
+  client: SupabaseClient,
+  planDayIds: string[],
+): Promise<MealWithRecipe[]> {
   if (planDayIds.length === 0) return [];
   const { data, error } = await client
     .from("meals")
-    .select("id, plan_day_id, meal_type, name, recipe:recipes(id, name, ingredients)")
+    .select(
+      "id, plan_day_id, meal_type, name, recipe:recipes(id, name, ingredients)",
+    )
     .in("plan_day_id", planDayIds);
   if (error) throw error;
   return data ?? [];
@@ -78,7 +93,9 @@ function normalizeIngredients(meals: MealWithRecipe[]): GroceryItem[] {
   const map = new Map<string, string[]>();
 
   for (const meal of meals) {
-    const recipe = Array.isArray(meal.recipe) ? meal.recipe[0] ?? null : meal.recipe;
+    const recipe = Array.isArray(meal.recipe)
+      ? meal.recipe[0] ?? null
+      : meal.recipe;
     const ingredients = Array.isArray(recipe?.ingredients)
       ? recipe?.ingredients as unknown[]
       : [];
@@ -91,9 +108,7 @@ function normalizeIngredients(meals: MealWithRecipe[]): GroceryItem[] {
         ? itemField
         : "Unspecified item";
       const amountField = ing.amount ?? ing.quantity;
-      const amount = typeof amountField === "string"
-        ? amountField
-        : "1 unit";
+      const amount = typeof amountField === "string" ? amountField : "1 unit";
       const key = itemName.trim().toLowerCase();
       const existing = map.get(key) ?? [];
       existing.push(amount);
@@ -109,9 +124,16 @@ function normalizeIngredients(meals: MealWithRecipe[]): GroceryItem[] {
     .sort((a, b) => a.item.localeCompare(b.item));
 }
 
-function buildExportWhy(plan: PlanRow, planDays: PlanDayRow[], meals: MealWithRecipe[], items: GroceryItem[]): string {
+function buildExportWhy(
+  plan: PlanRow,
+  planDays: PlanDayRow[],
+  meals: MealWithRecipe[],
+  items: GroceryItem[],
+): string {
   const parts = [
-    `Exported grocery list for plan starting ${plan.start_date ?? "unscheduled"}.`,
+    `Exported grocery list for plan starting ${
+      plan.start_date ?? "unscheduled"
+    }.`,
     `Covers ${planDays.length} plan days and ${meals.length} meals.`,
     `Aggregated ${items.length} unique ingredients to streamline shopping.`,
   ];
@@ -152,7 +174,9 @@ async function exportGroceryList(data: ExportRequest): Promise<ExportResponse> {
   };
 }
 
-export async function handleExportGrocery(body: ExportRequest): Promise<ExportResponse> {
+export async function handleExportGrocery(
+  body: ExportRequest,
+): Promise<ExportResponse> {
   try {
     return await exportGroceryList(body);
   } catch (error) {
@@ -171,7 +195,10 @@ if (import.meta.main) {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response("Method Not Allowed", {
+        status: 405,
+        headers: corsHeaders,
+      });
     }
 
     const body = await req.json().catch(() => ({})) as ExportRequest;

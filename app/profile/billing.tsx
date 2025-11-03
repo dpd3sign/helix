@@ -1,35 +1,54 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const invoices = [
-  { id: 'INV-001', amount: '$29', status: 'Paid', date: '2024-12-01' },
-  { id: 'INV-002', amount: '$29', status: 'Paid', date: '2025-01-01' },
+  { id: "INV-001", amount: "$29", status: "Paid", date: "2024-12-01" },
+  { id: "INV-002", amount: "$29", status: "Paid", date: "2025-01-01" },
 ];
 
 export default function BillingScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Subscription & Billing</ThemedText>
           <ThemedText style={styles.copy}>
-            Stripe customer portal integration will live here. Display plan details, renewal dates, and invoice history.
+            Stripe customer portal integration will live here. Display plan
+            details, renewal dates, and invoice history.
           </ThemedText>
         </View>
         <View style={styles.invoiceStack}>
-          {invoices.map(invoice => (
-            <View key={invoice.id} style={[styles.invoiceCard, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+          {invoices.map((invoice) => (
+            <View
+              key={invoice.id}
+              style={[styles.invoiceCard, {
+                backgroundColor: palette.surface,
+                borderColor: palette.borderMuted,
+              }]}
+            >
               <ThemedText type="defaultSemiBold">{invoice.id}</ThemedText>
               <ThemedText>{invoice.amount}</ThemedText>
-              <ThemedText style={styles.detail}>Status: {invoice.status}</ThemedText>
-              <ThemedText style={styles.detail}>Date: {invoice.date}</ThemedText>
+              <ThemedText style={styles.detail}>
+                Status: {invoice.status}
+              </ThemedText>
+              <ThemedText style={styles.detail}>
+                Date: {invoice.date}
+              </ThemedText>
             </View>
           ))}
         </View>

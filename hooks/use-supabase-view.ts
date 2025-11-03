@@ -1,8 +1,8 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/providers/auth-provider';
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/providers/auth-provider";
 
 interface UseSupabaseViewOptions {
   order?: { column: string; ascending?: boolean };
@@ -23,9 +23,14 @@ export function useSupabaseView<T = Record<string, unknown>>(
       return;
     }
     setLoading(true);
-    let query = supabase.from(viewName).select('*').eq('user_id', session.user.id);
+    let query = supabase.from(viewName).select("*").eq(
+      "user_id",
+      session.user.id,
+    );
     if (options?.order) {
-      query = query.order(options.order.column, { ascending: options.order.ascending ?? false });
+      query = query.order(options.order.column, {
+        ascending: options.order.ascending ?? false,
+      });
     }
     if (options?.limit) {
       query = query.limit(options.limit);
@@ -39,12 +44,18 @@ export function useSupabaseView<T = Record<string, unknown>>(
       setData((data as T[]) ?? []);
     }
     setLoading(false);
-  }, [session?.user, viewName, options?.order?.column, options?.order?.ascending, options?.limit]);
+  }, [
+    session?.user,
+    viewName,
+    options?.order?.column,
+    options?.order?.ascending,
+    options?.limit,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData])
+    }, [fetchData]),
   );
 
   return { data, loading, refetch: fetchData };

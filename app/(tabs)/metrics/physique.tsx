@@ -1,24 +1,38 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function PhysiqueVisualizerScreen() {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="subtitle">Physique Visualizer (Phase 2)</ThemedText>
           <ThemedText style={styles.copy}>
-            Placeholder for the advanced 3D body visualization module. Integrate with scanning hardware or manual measurement interpolation.
+            Placeholder for the advanced 3D body visualization module. Integrate
+            with scanning hardware or manual measurement interpolation.
           </ThemedText>
         </View>
-        <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.borderMuted }]}>
+        <View
+          style={[styles.card, {
+            backgroundColor: palette.surface,
+            borderColor: palette.borderMuted,
+          }]}
+        >
           <ThemedText type="defaultSemiBold">Implementation Notes</ThemedText>
           <ThemedText style={styles.copy}>
             • Store GLB models in Supabase Storage.

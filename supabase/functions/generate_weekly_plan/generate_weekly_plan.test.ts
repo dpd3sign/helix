@@ -1,5 +1,14 @@
-import { assert, assertEquals, assertGreater } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { EPEInput, generatePlanPreview, type ExerciseRow, type RecipeRow } from "./index.ts";
+import {
+  assert,
+  assertEquals,
+  assertGreater,
+} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import {
+  EPEInput,
+  type ExerciseRow,
+  generatePlanPreview,
+  type RecipeRow,
+} from "./index.ts";
 
 const baseRecipes: RecipeRow[] = [
   {
@@ -24,7 +33,11 @@ const baseRecipes: RecipeRow[] = [
     diet_type: "vegetarian",
     allergens: [] as string[],
     ingredients: [],
-    tags: { meal_type: "dinner", diet: ["vegetarian"], macro_focus: "balanced" },
+    tags: {
+      meal_type: "dinner",
+      diet: ["vegetarian"],
+      macro_focus: "balanced",
+    },
   },
   {
     id: "recipe-3",
@@ -69,13 +82,21 @@ const baseExercises: ExerciseRow[] = [
     id: "ex-1",
     name: "Goblet Squat",
     description: null,
-    tags: { equipment: ["dumbbells"], pattern: ["squat"], complexity: "beginner" },
+    tags: {
+      equipment: ["dumbbells"],
+      pattern: ["squat"],
+      complexity: "beginner",
+    },
   },
   {
     id: "ex-2",
     name: "Dumbbell RDL",
     description: null,
-    tags: { equipment: ["dumbbells"], pattern: ["hinge"], complexity: "beginner" },
+    tags: {
+      equipment: ["dumbbells"],
+      pattern: ["hinge"],
+      complexity: "beginner",
+    },
   },
   {
     id: "ex-3",
@@ -87,31 +108,51 @@ const baseExercises: ExerciseRow[] = [
     id: "ex-4",
     name: "Tempo Push-Up",
     description: null,
-    tags: { equipment: ["bodyweight"], pattern: ["push"], complexity: "beginner" },
+    tags: {
+      equipment: ["bodyweight"],
+      pattern: ["push"],
+      complexity: "beginner",
+    },
   },
   {
     id: "ex-5",
     name: "Plank",
     description: null,
-    tags: { equipment: ["bodyweight"], pattern: ["core"], complexity: "beginner" },
+    tags: {
+      equipment: ["bodyweight"],
+      pattern: ["core"],
+      complexity: "beginner",
+    },
   },
   {
     id: "ex-6",
     name: "Barbell Back Squat",
     description: null,
-    tags: { equipment: ["barbell", "rack"], pattern: ["squat"], complexity: "intermediate" },
+    tags: {
+      equipment: ["barbell", "rack"],
+      pattern: ["squat"],
+      complexity: "intermediate",
+    },
   },
   {
     id: "ex-7",
     name: "Bench Press",
     description: null,
-    tags: { equipment: ["barbell", "bench"], pattern: ["push"], complexity: "intermediate" },
+    tags: {
+      equipment: ["barbell", "bench"],
+      pattern: ["push"],
+      complexity: "intermediate",
+    },
   },
   {
     id: "ex-8",
     name: "Lat Pulldown",
     description: null,
-    tags: { equipment: ["cable", "gym"], pattern: ["pull"], complexity: "beginner" },
+    tags: {
+      equipment: ["cable", "gym"],
+      pattern: ["pull"],
+      complexity: "beginner",
+    },
   },
 ];
 
@@ -147,7 +188,9 @@ Deno.test("EPE fat loss preview respects diet, equipment, and explanations", asy
 
   plan.week.forEach((day, index) => {
     day.meals.forEach((meal) => {
-      assert(["breakfast", "lunch", "snack", "dinner"].includes(meal.meal_type));
+      assert(
+        ["breakfast", "lunch", "snack", "dinner"].includes(meal.meal_type),
+      );
       assertGreater(meal.kcal, 0);
     });
     if (index < input.training_days_per_week) {
@@ -155,12 +198,16 @@ Deno.test("EPE fat loss preview respects diet, equipment, and explanations", asy
       day.workouts.forEach((workout) => {
         workout.blocks.forEach((block) => {
           block.exercises.forEach((exercise) => {
-            const match = baseExercises.find((ex) => ex.id === exercise.exercise_id);
+            const match = baseExercises.find((ex) =>
+              ex.id === exercise.exercise_id
+            );
             assert(match, "exercise exists in pool");
             if (match?.tags?.equipment) {
               const equipment = match.tags.equipment as string[];
               assert(
-                equipment.some((tool) => input.equipment.includes(tool) || tool === "bodyweight"),
+                equipment.some((tool) =>
+                  input.equipment.includes(tool) || tool === "bodyweight"
+                ),
                 "exercise matches available equipment",
               );
             }
