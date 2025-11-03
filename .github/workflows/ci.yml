@@ -31,7 +31,7 @@ jobs:
             deno-${{ runner.os }}-
 
       - name: Lint
-        run: deno lint --rules-exclude no-import-prefix,no-unused-vars,require-await supabase
+        run: deno lint --rules-exclude=no-import-prefix,no-unused-vars,require-await supabase
 
       - name: Lint
         run: deno lint
