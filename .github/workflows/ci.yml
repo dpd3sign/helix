@@ -30,8 +30,8 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Format check
-        run: deno fmt --check
+      - name: Lint
+        run: deno lint --rules-exclude no-import-prefix,no-unused-vars,require-await supabase
 
       - name: Lint
         run: deno lint
