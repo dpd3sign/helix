@@ -6,9 +6,10 @@ on:
   pull_request:
     branches: ['main']
 
+# Temporarily disable auto-cancel so long-running installs aren't killed by new pushes
 concurrency:
   group: helix-ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   validate:
@@ -66,22 +67,21 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Install Deno deps (node types / npm) with timeout & fallback
+      # Pre-warm deps without executing tests; use mirror, timeout, and retries
+      - name: Pre-warm test deps (no-run) with timeout & mirror
         shell: bash
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmmirror.com/
         run: |
-          try_install () {
-            local registry="$1"
-            local attempt="$2"
-            local secs="$3"
-            echo ">>> install attempt ${attempt} using ${registry} (timeout ${secs}s)"
-            NPM_CONFIG_REGISTRY="${registry}" timeout "${secs}"s deno install
+          prewarm() {
+            echo ">>> prewarm attempt $2 (timeout $3s) registry=$NPM_CONFIG_REGISTRY"
+            timeout "$3"s deno test -A --no-run \
+              supabase/functions/generate_weekly_plan/generate_weekly_plan.test.ts \
+              supabase/functions/jobs/jobs.test.ts \
+              supabase/functions/utilities/utilities.test.ts \
+              supabase/functions/wearables-import-mock/wearables-import-mock.test.ts
           }
-          # Two attempts on npmjs, then two on npmmirror, with backoff
-          try_install https://registry.npmjs.org/      1 180 || \
-          (sleep 5  && try_install https://registry.npmjs.org/      2 240) || \
-          (sleep 10 && try_install https://registry.npmmirror.com/  3 240) || \
-          (sleep 10 && try_install https://registry.npmmirror.com/  4 300) || \
-          (echo "install failed after 4 attempts" && exit 1)
+          prewarm 1 180 || (sleep 5 && prewarm 2 240) || (sleep 10 && prewarm 3 300) || (echo "prewarm failed after 3 attempts" && exit 1)
 
       - name: Run Deno tests
         run: |
