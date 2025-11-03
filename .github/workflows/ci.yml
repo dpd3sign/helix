@@ -9,6 +9,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,18 +29,17 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Install Deno deps (node types / npm)
-        run: deno install
-
-      - name: Format check
+      # No install step here — validate only needs fmt+lint
+      - name: Format check (server code only)
         run: deno fmt --check supabase
 
-      - name: Lint
+      - name: Lint (server code only)
         run: deno lint --rules-exclude=no-import-prefix,no-unused-vars,require-await supabase
 
   test:
     runs-on: ubuntu-latest
     needs: validate
+    timeout-minutes: 15
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -62,8 +62,11 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Install Deno deps (node types / npm)
-        run: deno install
+      - name: Install Deno deps (node types / npm) with retry
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+        run: |
+          deno install || (sleep 5 && deno install) || (sleep 10 && deno install)
 
       - name: Run Deno tests
         run: |
