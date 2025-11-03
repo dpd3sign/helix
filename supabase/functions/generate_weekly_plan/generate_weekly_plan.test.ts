@@ -4,11 +4,11 @@ import {
   assertGreater,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  EPEInput,
-  type ExerciseRow,
   generatePlanPreview,
+  type EPEInput,
+  type ExerciseRow,
   type RecipeRow,
-} from "./index.ts";
+} from "./planner.ts";
 
 const baseRecipes: RecipeRow[] = [
   {

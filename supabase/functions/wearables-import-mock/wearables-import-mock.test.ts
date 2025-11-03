@@ -2,23 +2,38 @@ import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 import { runMockImport } from "./index.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-  "";
-const shouldSkip = SUPABASE_SERVICE_ROLE_KEY.length === 0;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const client = shouldSkip
-  ? null
-  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+function hasSecrets() {
+  return SUPABASE_SERVICE_ROLE_KEY.length > 0;
+}
+
+let clientPromise: Promise<any> | null = null;
+async function getClient() {
+  if (!hasSecrets()) {
+    throw new Error("Supabase credentials are not configured");
+  }
+  if (!clientPromise) {
+    clientPromise = import(
+      "https://esm.sh/@supabase/supabase-js@2.43.4?target=deno&deno-std=0.224.0"
+    ).then(({ createClient }) =>
+      createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false },
+      })
+    );
+  }
+  return clientPromise;
+}
+
+const shouldSkip = !hasSecrets();
 
 async function createTestUser() {
-  if (!client) return null;
+  if (!hasSecrets()) return null;
+  const client = await getClient();
   const email = `mock-wearable-${crypto.randomUUID()}@helix.local`;
   const { data, error } = await client.auth.admin.createUser({
     email,
@@ -30,12 +45,14 @@ async function createTestUser() {
 }
 
 async function deleteTestUser(userId: string) {
-  if (!client) return;
+  if (!hasSecrets()) return;
+  const client = await getClient();
   await client.auth.admin.deleteUser(userId);
 }
 
 async function countWearableRows(userId: string): Promise<number> {
-  if (!client) return 0;
+  if (!hasSecrets()) return 0;
+  const client = await getClient();
   const { count } = await client
     .from("wearable_daily_metrics")
     .select("id", { count: "exact", head: true })
@@ -45,7 +62,8 @@ async function countWearableRows(userId: string): Promise<number> {
 }
 
 async function fetchLatestJob(userId: string) {
-  if (!client) return null;
+  if (!hasSecrets()) return null;
+  const client = await getClient();
   const { data } = await client
     .from("job_runs")
     .select("*")

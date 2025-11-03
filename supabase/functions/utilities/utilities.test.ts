@@ -3,25 +3,38 @@ import {
   assertEquals,
   assertStringIncludes,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4";
 
 import { handleSwapExercise } from "../util-swap-exercise/index.ts";
 import { handleSwapRecipe } from "../util-swap-recipe/index.ts";
 import { handleExportGrocery } from "../util-export-grocery/index.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-  "";
-const shouldSkip = SUPABASE_SERVICE_ROLE_KEY.length === 0;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const client = shouldSkip
-  ? null
-  : createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+function hasSecrets() {
+  return Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+}
+
+let clientPromise: Promise<any> | null = null;
+async function getClient() {
+  if (!hasSecrets()) {
+    throw new Error("Supabase credentials are not configured");
+  }
+  if (!clientPromise) {
+    clientPromise = import(
+      "https://esm.sh/@supabase/supabase-js@2.43.4?target=deno&deno-std=0.224.0"
+    ).then(({ createClient }) =>
+      createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false },
+      })
+    );
+  }
+  return clientPromise;
+}
 
 async function createTestUser() {
-  if (!client) return null;
+  if (!hasSecrets()) return null;
+  const client = await getClient();
   const email = `test-${crypto.randomUUID()}@helix.local`;
   const { data, error } = await client.auth.admin.createUser({
     email,
@@ -33,12 +46,13 @@ async function createTestUser() {
 }
 
 async function deleteTestUser(userId: string) {
-  if (!client) return;
+  if (!hasSecrets()) return;
+  const client = await getClient();
   await client.auth.admin.deleteUser(userId);
 }
 
 async function insertPlan(userId: string) {
-  if (!client) throw new Error("Client not initialised");
+  const client = await getClient();
   const startDate = new Date().toISOString().slice(0, 10);
   const { data, error } = await client
     .from("plans")
@@ -57,12 +71,13 @@ async function insertPlan(userId: string) {
 }
 
 async function deletePlan(planId: string) {
-  if (!client) return;
+  if (!hasSecrets()) return;
+  const client = await getClient();
   await client.from("plans").delete().eq("id", planId);
 }
 
 async function insertPlanDay(planId: string, dayIndex = 0) {
-  if (!client) throw new Error("Client not initialised");
+  const client = await getClient();
   const date = new Date();
   date.setDate(date.getDate() + dayIndex);
   const { data, error } = await client
@@ -81,7 +96,7 @@ async function insertPlanDay(planId: string, dayIndex = 0) {
 }
 
 async function getTwoExercises() {
-  if (!client) throw new Error("Client not initialised");
+  const client = await getClient();
   const { data, error } = await client
     .from("exercises")
     .select("id, name, tags")
@@ -94,7 +109,7 @@ async function getTwoExercises() {
 }
 
 async function getTwoRecipes() {
-  if (!client) throw new Error("Client not initialised");
+  const client = await getClient();
   const { data, error } = await client
     .from("recipes")
     .select("id, name, kcal, protein_g, carbs_g, fat_g, diet_type, tags")
@@ -106,12 +121,8 @@ async function getTwoRecipes() {
   return data;
 }
 
-async function insertWorkout(
-  planDayId: string,
-  exerciseId: string,
-  exerciseName: string,
-) {
-  if (!client) throw new Error("Client not initialised");
+async function insertWorkout(planDayId: string, exerciseId: string, exerciseName: string) {
+  const client = await getClient();
   const block = [
     {
       title: "Strength Block",
@@ -150,7 +161,7 @@ async function insertMeal(
     fat_g: number;
   },
 ) {
-  if (!client) throw new Error("Client not initialised");
+  const client = await getClient();
   const { data, error } = await client
     .from("meals")
     .insert({
@@ -171,7 +182,8 @@ async function insertMeal(
 }
 
 async function fetchLatestAudit(planId: string) {
-  if (!client) return null;
+  if (!hasSecrets()) return null;
+  const client = await getClient();
   const { data } = await client
     .from("audit_regenerations")
     .select("*")
@@ -184,10 +196,10 @@ async function fetchLatestAudit(planId: string) {
 
 Deno.test({
   name: "swap_exercise updates workout and logs audit",
-  ignore: shouldSkip,
+  ignore: !hasSecrets(),
   sanitizeOps: false,
   sanitizeResources: false,
-  fn: async () => {
+  async fn() {
     const user = await createTestUser();
     assert(user, "user creation failed");
 
@@ -208,7 +220,8 @@ Deno.test({
       assert(result.blocks, "blocks missing in response");
       assertStringIncludes(result.why ?? "", toExercise.name);
 
-      const workout = await client!.from("workouts").select("blocks").eq(
+      const client = await getClient();
+      const workout = await client.from("workouts").select("blocks").eq(
         "id",
         result.workout_id!,
       ).single();
@@ -219,7 +232,7 @@ Deno.test({
 
       const audit = await fetchLatestAudit(planId);
       assert(audit, "Audit row not written");
-      assertEquals(audit.delta?.type, "swap_exercise");
+      assertEquals(audit?.delta?.type, "swap_exercise");
     } finally {
       await deletePlan(planId);
       await deleteTestUser(user.id);
@@ -229,10 +242,10 @@ Deno.test({
 
 Deno.test({
   name: "swap_recipe updates meal macros and logs audit",
-  ignore: shouldSkip,
+  ignore: !hasSecrets(),
   sanitizeOps: false,
   sanitizeResources: false,
-  fn: async () => {
+  async fn() {
     const user = await createTestUser();
     assert(user, "user creation failed");
 
@@ -255,7 +268,7 @@ Deno.test({
 
       const audit = await fetchLatestAudit(planId);
       assert(audit, "Audit row not written");
-      assertEquals(audit.delta?.type, "swap_recipe");
+      assertEquals(audit?.delta?.type, "swap_recipe");
     } finally {
       await deletePlan(planId);
       await deleteTestUser(user.id);
@@ -265,10 +278,10 @@ Deno.test({
 
 Deno.test({
   name: "export_grocery_list aggregates ingredients and logs audit",
-  ignore: shouldSkip,
+  ignore: !hasSecrets(),
   sanitizeOps: false,
   sanitizeResources: false,
-  fn: async () => {
+  async fn() {
     const user = await createTestUser();
     assert(user, "user creation failed");
 
@@ -281,15 +294,12 @@ Deno.test({
     try {
       const result = await handleExportGrocery({ plan_id: planId });
       assert(result.ok, `export_grocery_list failed: ${result.error}`);
-      assert(
-        result.items && result.items.length > 0,
-        "No grocery items returned",
-      );
+      assert(result.items && result.items.length > 0, "No grocery items returned");
       assertStringIncludes(result.why ?? "", "Exported grocery list");
 
       const audit = await fetchLatestAudit(planId);
       assert(audit, "Audit row not written");
-      assertEquals(audit.delta?.type, "export_grocery_list");
+      assertEquals(audit?.delta?.type, "export_grocery_list");
     } finally {
       await deletePlan(planId);
       await deleteTestUser(user.id);

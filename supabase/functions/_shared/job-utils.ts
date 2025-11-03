@@ -2,7 +2,7 @@ import {
   createClient,
   type PostgrestSingleResponse,
   type SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2.43.4";
+} from "https://esm.sh/@supabase/supabase-js@2.43.4?target=deno&deno-std=0.224.0";
 
 export type RunType = "manual" | "cron";
 

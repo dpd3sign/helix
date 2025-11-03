@@ -72,6 +72,9 @@
     "https://esm.sh/ws@8.18.3?target=denonext": "a5ca9d7990fc419fd8b8d06d0855bb64688769e6bb887ba07d36c13172f882b5"
   },
   "workspace": {
+    "dependencies": [
+      "npm:@types/node@*"
+    ],
     "packageJson": {
       "dependencies": [
         "npm:@expo/vector-icons@^15.0.3",
