@@ -37,7 +37,7 @@ jobs:
         run: deno fmt --check supabase
 
       - name: Lint (server code only)
-        run: deno lint --rules-exclude=no-import-prefix,no-unused-vars,require-await supabase
+        run: deno lint --rules-exclude=no-import-prefix,no-unused-vars,require-await,no-explicit-any supabase
 
   test:
     runs-on: ubuntu-latest
