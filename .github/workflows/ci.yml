@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ['main']
 
+concurrency:
+  group: helix-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -62,21 +66,22 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Install Deno deps (node types / npm) with timeout & retry
-        env:
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+      - name: Install Deno deps (node types / npm) with timeout & fallback
+        shell: bash
         run: |
-          for i in 1 2 3; do
-            echo "Deno install attempt $i"
-            if timeout 180s deno install; then
-              echo "install succeeded"
-              exit 0
-            fi
-            echo "install timed out, retrying..."
-            sleep $((i*10))
-          done
-          echo "install failed after 3 attempts"
-          exit 1
+          try_install () {
+            local registry="$1"
+            local attempt="$2"
+            local secs="$3"
+            echo ">>> install attempt ${attempt} using ${registry} (timeout ${secs}s)"
+            NPM_CONFIG_REGISTRY="${registry}" timeout "${secs}"s deno install
+          }
+          # Two attempts on npmjs, then two on npmmirror, with backoff
+          try_install https://registry.npmjs.org/      1 180 || \
+          (sleep 5  && try_install https://registry.npmjs.org/      2 240) || \
+          (sleep 10 && try_install https://registry.npmmirror.com/  3 240) || \
+          (sleep 10 && try_install https://registry.npmmirror.com/  4 300) || \
+          (echo "install failed after 4 attempts" && exit 1)
 
       - name: Run Deno tests
         run: |

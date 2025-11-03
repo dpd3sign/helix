@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { useColorScheme } from "react-native";
 
@@ -9,21 +10,45 @@ import { Colors } from "@/constants/theme";
 export default function TabLayout() {
   const scheme = useColorScheme();
   const palette = scheme === "dark" ? Colors.dark : Colors.light;
+  const glass = palette.glass;
 
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: palette.navigation },
+        headerStyle: { backgroundColor: palette.background },
         headerTintColor: palette.text,
         headerTitleStyle: { fontWeight: "600" },
+        sceneContainerStyle: { backgroundColor: palette.background },
         tabBarStyle: {
-          backgroundColor: palette.navigation,
-          borderTopColor: palette.borderMuted,
+          position: "absolute",
+          left: 16,
+          right: 16,
+          bottom: 12,
+          height: 68,
+          borderRadius: glass.radius + 4,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
+          shadowColor: glass.shadowColor,
+          shadowOffset: glass.shadowOffset,
+          shadowOpacity: glass.shadowOpacity,
+          shadowRadius: glass.shadowRadius,
+          elevation: glass.elevation,
         },
         tabBarLabelStyle: { fontSize: 12, fontWeight: "500" },
         tabBarActiveTintColor: palette.tabIconSelected,
         tabBarInactiveTintColor: palette.tabIconDefault,
         tabBarButton: HapticTab,
+        tabBarBackground: () => (
+          <BlurView
+            intensity={40}
+            tint={scheme === "dark" ? "dark" : "light"}
+            style={{
+              flex: 1,
+              borderRadius: glass.radius + 4,
+              overflow: "hidden",
+            }}
+          />
+        ),
         headerRight: () => <FloatingMenu />,
       }}
     >

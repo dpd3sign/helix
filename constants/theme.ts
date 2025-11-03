@@ -47,8 +47,8 @@ const Palette = {
 export const Colors = {
   light: {
     text: Palette.codGray[900],
-    background: Palette.codGray[50],
-    surface: Palette.codGray[100],
+    background: Palette.codGray[100],
+    surface: Palette.codGray[50],
     navigation: Palette.codGray[50],
     borderMuted: Palette.codGray[200],
     tint: Palette.skyBlue[500],
@@ -62,12 +62,22 @@ export const Colors = {
     inputBackground: "rgba(15, 15, 15, 0.35)",
     inputBorder: "rgba(255, 255, 255, 0.18)",
     overlay: "rgba(14, 14, 14, 0.55)",
+    glass: {
+      bg: "rgba(0, 0, 0, 0.08)",
+      border: "rgba(0, 0, 0, 0.12)",
+      radius: 24,
+      shadowColor: "rgba(0, 0, 0, 0.12)",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.12,
+      shadowRadius: 20,
+      elevation: 6,
+    },
   },
   dark: {
     text: Palette.codGray[100],
-    background: "#0B0B0B", // <---- New global background color (Dark Mode)
-    surface: Palette.codGray[900],
-    navigation: Palette.codGray[900],
+    background: Palette.codGray[900],
+    surface: Palette.codGray[950],
+    navigation: Palette.codGray[950],
     borderMuted: Palette.codGray[800],
     tint: Palette.skyBlue[300],
     tabIconDefault: Palette.codGray[500],
@@ -80,5 +90,15 @@ export const Colors = {
     inputBackground: "rgba(15, 15, 15, 0.45)",
     inputBorder: "rgba(255, 255, 255, 0.18)",
     overlay: "rgba(14, 14, 14, 0.55)",
+    glass: {
+      bg: "rgba(255, 255, 255, 0.06)",
+      border: "rgba(255, 255, 255, 0.18)",
+      radius: 24,
+      shadowColor: "rgba(0, 0, 0, 0.35)",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.35,
+      shadowRadius: 30,
+      elevation: 10,
+    },
   },
 };

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
+import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
@@ -68,53 +69,58 @@ export default function LoginScreen() {
           </ThemedText>
         </View>
 
-        <View
-          style={[
-            styles.form,
-            {
-              backgroundColor: palette.inputBackground,
-              borderColor: palette.inputBorder,
-            },
-          ]}
-        >
+        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        <ThemedView variant="glass" style={styles.form}>
           <TextInput
-            style={[styles.input, { color: palette.text }]}
+            style={[
+              styles.input,
+              {
+                color: palette.text,
+                borderBottomColor: palette.borderMuted,
+              },
+            ]}
             placeholder="Email"
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
             onChangeText={setEmail}
-            placeholderTextColor="rgba(255,255,255,0.65)"
+            placeholderTextColor={palette.borderMuted}
           />
           <TextInput
-            style={[styles.input, { color: palette.text }]}
+            style={[
+              styles.input,
+              {
+                color: palette.text,
+                borderBottomColor: palette.borderMuted,
+              },
+            ]}
             placeholder="Password"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            placeholderTextColor="rgba(255,255,255,0.65)"
+            placeholderTextColor={palette.borderMuted}
           />
-        </View>
+        </ThemedView>
 
         <Pressable
-          style={[
-            styles.primaryButton,
-            { backgroundColor: palette.buttonPrimaryBackground },
+          style={({ pressed }) => [
+            styles.primaryButtonWrapper,
+            pressed && { opacity: 0.94 },
           ]}
           onPress={handleLogin}
           disabled={loading}
         >
-          {loading
-            ? <ActivityIndicator color={palette.buttonPrimaryText} />
-            : (
-              <ThemedText
-                style={[styles.primaryText, {
-                  color: palette.buttonPrimaryText,
-                }]}
-              >
-                Sign In
-              </ThemedText>
-            )}
+          <ThemedView variant="glass" style={styles.primaryButton}>
+            {loading
+              ? <ActivityIndicator color={palette.tint} />
+              : (
+                <ThemedText
+                  style={[styles.primaryText, { color: palette.tint }]}
+                >
+                  Sign In
+                </ThemedText>
+              )}
+          </ThemedView>
         </Pressable>
 
         <Pressable
@@ -149,22 +155,20 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   form: {
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingVertical: 4,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     gap: 12,
   },
   input: {
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255,255,255,0.12)",
     fontSize: 16,
   },
-  primaryButton: {
+  primaryButtonWrapper: {
     marginTop: 24,
+  },
+  primaryButton: {
     paddingVertical: 16,
-    borderRadius: 22,
     alignItems: "center",
   },
   primaryText: {

@@ -44,33 +44,31 @@ export default function MetricsOverviewScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[styles.hero, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        <ThemedView variant="glass" style={styles.hero}>
           <ThemedText type="subtitle">Metrics Dashboard</ThemedText>
           <ThemedText style={styles.heroCopy}>
             Visualize how your readiness, nutrition, training, and mindset sync
             together. Each section below will pull from Supabase materialized
             views.
           </ThemedText>
-        </View>
+        </ThemedView>
 
         <View style={styles.sectionList}>
           {sections.map((section) => (
             <Link key={section.title} href={section.href} asChild>
               <Pressable
-                style={[styles.card, {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                }]}
+                style={({ pressed }) => [
+                  styles.cardPressable,
+                  pressed && { opacity: 0.95 },
+                ]}
               >
-                <ThemedText type="defaultSemiBold">{section.title}</ThemedText>
-                <ThemedText style={styles.cardDescription}>
-                  {section.description}
-                </ThemedText>
+                <ThemedView variant="glass" style={styles.card}>
+                  <ThemedText type="defaultSemiBold">{section.title}</ThemedText>
+                  <ThemedText style={styles.cardDescription}>
+                    {section.description}
+                  </ThemedText>
+                </ThemedView>
               </Pressable>
             </Link>
           ))}
@@ -84,8 +82,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 24, gap: 24 },
   hero: {
-    borderRadius: 20,
-    borderWidth: 1,
     padding: 20,
     gap: 10,
   },
@@ -96,9 +92,10 @@ const styles = StyleSheet.create({
   sectionList: {
     gap: 16,
   },
+  cardPressable: {
+    borderRadius: 24,
+  },
   card: {
-    borderRadius: 18,
-    borderWidth: 1,
     padding: 18,
     gap: 6,
   },

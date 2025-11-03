@@ -76,6 +76,7 @@ const systemLinks = [
 export default function HomeScreen() {
   const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
+  const glass = palette.glass;
 
   return (
     <ThemedView style={styles.container}>
@@ -83,12 +84,8 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[styles.hero, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        <ThemedView variant="glass" style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heroBadge}>
             Mission Control
           </ThemedText>
@@ -99,23 +96,18 @@ export default function HomeScreen() {
             Connect wearables, review readiness, and let HELIX adapt your
             training and nutrition each morning.
           </ThemedText>
-        </View>
+        </ThemedView>
 
         <View style={styles.metricRow}>
           {quickMetrics.map((metric) => (
-            <View
+            <ThemedView
               key={metric.label}
-              style={[
-                styles.metricCard,
-                {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                },
-              ]}
+              variant="glass"
+              style={styles.metricCard}
             >
               <ThemedText type="defaultSemiBold">{metric.label}</ThemedText>
               <ThemedText style={styles.metricValue}>{metric.value}</ThemedText>
-            </View>
+            </ThemedView>
           ))}
         </View>
 
@@ -123,16 +115,18 @@ export default function HomeScreen() {
           {quickActions.map((action) => (
             <Link key={action.label} href={action.href} asChild>
               <Pressable
-                style={[styles.actionChip, {
-                  backgroundColor: `${palette.tint}1A`,
-                  borderColor: `${palette.tint}33`,
-                }]}
+                style={({ pressed }) => [
+                  styles.glassPressable,
+                  pressed && { opacity: 0.95 },
+                ]}
               >
-                <ThemedText
-                  style={[styles.actionText, { color: palette.tint }]}
-                >
-                  {action.label}
-                </ThemedText>
+                <ThemedView variant="glass" style={styles.actionChip}>
+                  <ThemedText
+                    style={[styles.actionText, { color: palette.tint }]}
+                  >
+                    {action.label}
+                  </ThemedText>
+                </ThemedView>
               </Pressable>
             </Link>
           ))}
@@ -150,31 +144,38 @@ export default function HomeScreen() {
           {moduleCards.map((card) => (
             <Link key={card.title} href={card.href} asChild>
               <Pressable
-                style={[styles.card, {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                }]}
+                style={({ pressed }) => [
+                  styles.glassPressable,
+                  pressed && { opacity: 0.95 },
+                ]}
               >
-                <View style={styles.cardIcon}>
-                  <Ionicons name={card.icon} size={24} color={palette.tint} />
-                </View>
-                <ThemedText type="subtitle" style={styles.cardTitle}>
-                  {card.title}
-                </ThemedText>
-                <ThemedText style={styles.cardDescription}>
-                  {card.description}
-                </ThemedText>
-                <View
-                  style={[styles.statusPill, {
-                    backgroundColor: `${palette.tint}1A`,
-                  }]}
-                >
-                  <ThemedText
-                    style={[styles.statusText, { color: palette.tint }]}
+                <ThemedView variant="glass" style={styles.card}>
+                  <View
+                    style={[
+                      styles.cardIcon,
+                      { backgroundColor: glass.bg },
+                    ]}
                   >
-                    {card.status}
+                    <Ionicons name={card.icon} size={24} color={palette.tint} />
+                  </View>
+                  <ThemedText type="subtitle" style={styles.cardTitle}>
+                    {card.title}
                   </ThemedText>
-                </View>
+                  <ThemedText style={styles.cardDescription}>
+                    {card.description}
+                  </ThemedText>
+                  <View
+                    style={[styles.statusPill, {
+                      backgroundColor: `${palette.tint}1A`,
+                    }]}
+                  >
+                    <ThemedText
+                      style={[styles.statusText, { color: palette.tint }]}
+                    >
+                      {card.status}
+                    </ThemedText>
+                  </View>
+                </ThemedView>
               </Pressable>
             </Link>
           ))}
@@ -187,25 +188,15 @@ export default function HomeScreen() {
           </ThemedText>
         </View>
 
-        <View
-          style={[styles.notificationCard, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        <ThemedView variant="glass" style={styles.notificationCard}>
           {notifications.map((note) => (
             <ThemedText key={note} style={styles.notificationItem}>
               • {note}
             </ThemedText>
           ))}
-        </View>
+        </ThemedView>
 
-        <View
-          style={[styles.coachBubble, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        <ThemedView variant="glass" style={styles.coachBubble}>
           <View style={styles.coachHeader}>
             <Ionicons
               name="chatbubbles-outline"
@@ -220,12 +211,21 @@ export default function HomeScreen() {
           </ThemedText>
           <Link href="/(tabs)/coach" asChild>
             <Pressable
-              style={[styles.coachButton, { backgroundColor: palette.tint }]}
+              style={({ pressed }) => [
+                styles.coachButton,
+                pressed && { opacity: 0.92 },
+              ]}
             >
-              <ThemedText style={styles.coachButtonText}>Open Coach</ThemedText>
+              <ThemedView variant="glass" style={styles.coachButtonInner}>
+                <ThemedText
+                  style={[styles.coachButtonText, { color: palette.tint }]}
+                >
+                  Open Coach
+                </ThemedText>
+              </ThemedView>
             </Pressable>
           </Link>
-        </View>
+        </ThemedView>
 
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">System & Support</ThemedText>
@@ -238,13 +238,15 @@ export default function HomeScreen() {
           {systemLinks.map((link) => (
             <Link key={link.title} href={link.href} asChild>
               <Pressable
-                style={[styles.systemCard, {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                }]}
+                style={({ pressed }) => [
+                  styles.glassPressable,
+                  pressed && { opacity: 0.95 },
+                ]}
               >
-                <Ionicons name={link.icon} size={22} color={palette.tint} />
-                <ThemedText type="defaultSemiBold">{link.title}</ThemedText>
+                <ThemedView variant="glass" style={styles.systemCard}>
+                  <Ionicons name={link.icon} size={22} color={palette.tint} />
+                  <ThemedText type="defaultSemiBold">{link.title}</ThemedText>
+                </ThemedView>
               </Pressable>
             </Link>
           ))}
@@ -262,8 +264,6 @@ const styles = StyleSheet.create({
   },
   hero: {
     padding: 24,
-    borderWidth: 1,
-    borderRadius: 20,
     gap: 12,
   },
   heroBadge: {
@@ -285,8 +285,6 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    borderRadius: 16,
-    borderWidth: 1,
     paddingVertical: 18,
     paddingHorizontal: 16,
     gap: 6,
@@ -312,11 +310,13 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
   },
+  glassPressable: {
+    borderRadius: 24,
+  },
   actionChip: {
-    borderWidth: 1,
-    borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    alignItems: "center",
   },
   actionText: {
     fontSize: 13,
@@ -325,8 +325,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "47%",
-    borderRadius: 20,
-    borderWidth: 1,
     padding: 20,
     gap: 12,
   },
@@ -336,7 +334,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#00000008",
   },
   cardTitle: {
     fontSize: 18,
@@ -360,8 +357,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   notificationCard: {
-    borderRadius: 18,
-    borderWidth: 1,
     padding: 18,
     gap: 8,
   },
@@ -370,8 +365,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   coachBubble: {
-    borderRadius: 20,
-    borderWidth: 1,
     padding: 20,
     gap: 12,
   },
@@ -387,12 +380,14 @@ const styles = StyleSheet.create({
   },
   coachButton: {
     alignSelf: "flex-start",
-    paddingHorizontal: 18,
+    borderRadius: 24,
+  },
+  coachButtonInner: {
+    paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 14,
+    alignItems: "center",
   },
   coachButtonText: {
-    color: "#FFFFFF",
     fontWeight: "600",
   },
   systemGrid: {
@@ -402,8 +397,6 @@ const styles = StyleSheet.create({
   },
   systemCard: {
     flexBasis: "47%",
-    borderRadius: 16,
-    borderWidth: 1,
     padding: 16,
     gap: 10,
     alignItems: "flex-start",

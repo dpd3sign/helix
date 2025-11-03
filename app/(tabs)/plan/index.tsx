@@ -175,12 +175,8 @@ export default function PlanOverviewScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[styles.selector, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        <ThemedView variant="glass" style={styles.selector}>
           <ThemedText type="subtitle">Plan Overview</ThemedText>
           {!plan && !loading
             ? (
@@ -196,13 +192,13 @@ export default function PlanOverviewScreen() {
                   {plan?.end_date ?? "—"}
                 </ThemedText>
                 <View style={styles.metaRow}>
-                  <View style={styles.metaCard}>
+                  <ThemedView variant="glass" style={styles.metaCard}>
                     <ThemedText type="defaultSemiBold">Readiness</ThemedText>
                     <ThemedText style={styles.metaValue}>
                       {plan?.readiness_score ?? "Pending"}
                     </ThemedText>
-                  </View>
-                  <View style={styles.metaCard}>
+                  </ThemedView>
+                  <ThemedView variant="glass" style={styles.metaCard}>
                     <ThemedText type="defaultSemiBold">Adjustments</ThemedText>
                     <ThemedText style={styles.metaValue}>
                       {Array.isArray(plan?.adjustments_made)
@@ -211,11 +207,11 @@ export default function PlanOverviewScreen() {
                         ? "Logged"
                         : "None"}
                     </ThemedText>
-                  </View>
+                  </ThemedView>
                 </View>
               </>
             )}
-        </View>
+        </ThemedView>
 
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">Upcoming Workouts</ThemedText>
@@ -224,12 +220,7 @@ export default function PlanOverviewScreen() {
           </ThemedText>
         </View>
 
-        <View
-          style={[styles.card, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        <ThemedView variant="glass" style={styles.card}>
           {nextSessions.length === 0
             ? (
               <ThemedText style={styles.placeholder}>
@@ -249,7 +240,9 @@ export default function PlanOverviewScreen() {
                   <ThemedText style={styles.cardDetail}>
                     {item.focus ?? item.prescription ?? "Prescription pending"}
                   </ThemedText>
-                  <ThemedText style={styles.cardStatus}>
+                  <ThemedText
+                    style={[styles.cardStatus, { color: palette.borderMuted }]}
+                  >
                     {item.status ?? "Scheduled"}
                   </ThemedText>
                 </View>
@@ -262,11 +255,21 @@ export default function PlanOverviewScreen() {
             }}
             asChild
           >
-            <Pressable style={styles.viewButton} disabled={!plan}>
-              <ThemedText style={styles.viewText}>Open Workout View</ThemedText>
+            <Pressable
+              style={({ pressed }) => [
+                styles.viewButtonPressable,
+                pressed && { opacity: 0.94 },
+              ]}
+              disabled={!plan}
+            >
+              <ThemedView variant="glass" style={styles.viewButton}>
+                <ThemedText style={[styles.viewText, { color: palette.tint }]}>
+                  Open Workout View
+                </ThemedText>
+              </ThemedView>
             </Pressable>
           </Link>
-        </View>
+        </ThemedView>
 
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">Meals</ThemedText>
@@ -275,12 +278,7 @@ export default function PlanOverviewScreen() {
           </ThemedText>
         </View>
 
-        <View
-          style={[styles.card, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        <ThemedView variant="glass" style={styles.card}>
           {!todayMeals
             ? (
               <ThemedText style={styles.placeholder}>
@@ -302,7 +300,11 @@ export default function PlanOverviewScreen() {
                   {todayMeals.carbs_g ?? "—"}g · F {todayMeals.fat_g ?? "—"}g
                 </ThemedText>
                 {(todayMeals.meals ?? []).map((meal) => (
-                  <View key={meal.meal_id} style={styles.mealRow}>
+                  <ThemedView
+                    key={meal.meal_id}
+                    variant="glass"
+                    style={styles.mealRow}
+                  >
                     <ThemedText type="defaultSemiBold">
                       {meal.meal_type}
                     </ThemedText>
@@ -310,7 +312,7 @@ export default function PlanOverviewScreen() {
                       {meal.planned_calories ?? "—"} kcal · P{" "}
                       {meal.protein_g ?? "—"}g
                     </ThemedText>
-                  </View>
+                  </ThemedView>
                 ))}
               </>
             )}
@@ -321,11 +323,21 @@ export default function PlanOverviewScreen() {
             }}
             asChild
           >
-            <Pressable style={styles.viewButton} disabled={!plan}>
-              <ThemedText style={styles.viewText}>Open Meal View</ThemedText>
+            <Pressable
+              style={({ pressed }) => [
+                styles.viewButtonPressable,
+                pressed && { opacity: 0.94 },
+              ]}
+              disabled={!plan}
+            >
+              <ThemedView variant="glass" style={styles.viewButton}>
+                <ThemedText style={[styles.viewText, { color: palette.tint }]}>
+                  Open Meal View
+                </ThemedText>
+              </ThemedView>
             </Pressable>
           </Link>
-        </View>
+        </ThemedView>
 
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">Quick Actions</ThemedText>
@@ -340,20 +352,22 @@ export default function PlanOverviewScreen() {
               return (
                 <Link key={action.label} href={action.href} asChild>
                   <Pressable
-                    style={[styles.actionCard, {
-                      backgroundColor: palette.surface,
-                      borderColor: palette.borderMuted,
-                    }]}
+                    style={({ pressed }) => [
+                      styles.actionCardPressable,
+                      pressed && { opacity: 0.95 },
+                    ]}
                     disabled={!plan}
                   >
-                    <Ionicons
-                      name={action.icon}
-                      size={22}
-                      color={palette.tint}
-                    />
-                    <ThemedText style={styles.actionLabel}>
-                      {action.label}
-                    </ThemedText>
+                    <ThemedView variant="glass" style={styles.actionCard}>
+                      <Ionicons
+                        name={action.icon}
+                        size={22}
+                        color={palette.tint}
+                      />
+                      <ThemedText style={styles.actionLabel}>
+                        {action.label}
+                      </ThemedText>
+                    </ThemedView>
                   </Pressable>
                 </Link>
               );
@@ -361,17 +375,19 @@ export default function PlanOverviewScreen() {
             return (
               <Pressable
                 key={action.label}
-                style={[styles.actionCard, {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                }]}
+                style={({ pressed }) => [
+                  styles.actionCardPressable,
+                  pressed && { opacity: 0.95 },
+                ]}
                 onPress={action.onPress}
                 disabled={loading}
               >
-                <Ionicons name={action.icon} size={22} color={palette.tint} />
-                <ThemedText style={styles.actionLabel}>
-                  {action.label}
-                </ThemedText>
+                <ThemedView variant="glass" style={styles.actionCard}>
+                  <Ionicons name={action.icon} size={22} color={palette.tint} />
+                  <ThemedText style={styles.actionLabel}>
+                    {action.label}
+                  </ThemedText>
+                </ThemedView>
               </Pressable>
             );
           })}
@@ -387,8 +403,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 24, gap: 24 },
   selector: {
-    borderRadius: 20,
-    borderWidth: 1,
     padding: 20,
     gap: 16,
   },
@@ -402,9 +416,6 @@ const styles = StyleSheet.create({
   },
   metaCard: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#1F6FEB20",
-    borderRadius: 14,
     padding: 12,
     gap: 6,
   },
@@ -420,8 +431,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   card: {
-    borderRadius: 18,
-    borderWidth: 1,
     padding: 18,
     gap: 12,
   },
@@ -434,21 +443,22 @@ const styles = StyleSheet.create({
   },
   cardStatus: {
     fontSize: 12,
-    color: "#7D8793",
+    fontWeight: "600",
   },
   placeholder: {
     opacity: 0.6,
   },
-  viewButton: {
+  viewButtonPressable: {
     marginTop: 8,
     alignSelf: "flex-start",
-    paddingHorizontal: 18,
+    borderRadius: 24,
+  },
+  viewButton: {
+    paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: "#1F6FEB",
+    alignItems: "center",
   },
   viewText: {
-    color: "#FFFFFF",
     fontWeight: "600",
   },
   actionsGrid: {
@@ -456,10 +466,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 16,
   },
-  actionCard: {
+  actionCardPressable: {
     flexBasis: "47%",
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 24,
+  },
+  actionCard: {
     padding: 18,
     gap: 12,
     alignItems: "flex-start",
@@ -468,9 +479,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   mealRow: {
-    borderWidth: 1,
-    borderColor: "#E1E6EF",
-    borderRadius: 12,
     padding: 12,
     gap: 4,
   },

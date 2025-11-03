@@ -1,0 +1,8 @@
+{
+  "nodeModulesDir": "auto",
+  "compilerOptions": {
+    "types": ["npm:@types/node"]
+  },
+  "fmt": { "include": ["supabase"] },
+  "lint": { "include": ["supabase"] }
+}
