@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      # No install step here — validate only needs fmt+lint
+      # Validate only (no install)
       - name: Format check (server code only)
         run: deno fmt --check supabase
 
@@ -62,11 +62,21 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Install Deno deps (node types / npm) with retry
+      - name: Install Deno deps (node types / npm) with timeout & retry
         env:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
         run: |
-          deno install || (sleep 5 && deno install) || (sleep 10 && deno install)
+          for i in 1 2 3; do
+            echo "Deno install attempt $i"
+            if timeout 180s deno install; then
+              echo "install succeeded"
+              exit 0
+            fi
+            echo "install timed out, retrying..."
+            sleep $((i*10))
+          done
+          echo "install failed after 3 attempts"
+          exit 1
 
       - name: Run Deno tests
         run: |
