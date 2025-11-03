@@ -84,7 +84,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        {/* Liquid-glass group: see Colors.*.glass tokens */}
         <ThemedView variant="glass" style={styles.hero}>
           <ThemedText type="subtitle" style={styles.heroBadge}>
             Mission Control
@@ -317,6 +317,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: "center",
+    width: "100%",
   },
   actionText: {
     fontSize: 13,

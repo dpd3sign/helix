@@ -69,7 +69,7 @@ export default function LoginScreen() {
           </ThemedText>
         </View>
 
-        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        {/* Liquid-glass group: see Colors.*.glass tokens */}
         <ThemedView variant="glass" style={styles.form}>
           <TextInput
             style={[

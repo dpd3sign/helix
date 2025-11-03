@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { BlurView } from "expo-blur";
 import {
   StyleSheet,
@@ -14,23 +15,31 @@ export type ThemedViewProps = ViewProps & {
   lightColor?: string;
   darkColor?: string;
   variant?: "default" | "glass";
+  children?: ReactNode;
 };
 
 export function ThemedView(
-  { style, lightColor, darkColor, variant = "default", ...otherProps }:
-    ThemedViewProps,
+  {
+    style,
+    lightColor,
+    darkColor,
+    variant = "default",
+    children,
+    ...otherProps
+  }: ThemedViewProps,
 ) {
   const scheme = useColorScheme() ?? "light";
 
   if (variant === "glass") {
     const glassTokens = Colors[scheme].glass;
+    const surfaceColor = Colors[scheme].surface;
     const flattenedStyle = StyleSheet.flatten(style) ?? {};
     const { outerStyle, innerStyle } = splitOuterInnerStyles(flattenedStyle);
     const blurTint = scheme === "dark" ? "dark" : "light";
 
     return (
       <BlurView
-        intensity={40}
+        intensity={glassTokens.blurIntensity}
         tint={blurTint}
         style={[
           {
@@ -49,14 +58,49 @@ export function ThemedView(
           {...otherProps}
           style={[
             {
-              backgroundColor: glassTokens.bg,
+              backgroundColor: surfaceColor,
               borderColor: glassTokens.border,
               borderRadius: glassTokens.radius,
               borderWidth: StyleSheet.hairlineWidth * 2,
+              overflow: "hidden",
             },
             innerStyle,
           ]}
-        />
+        >
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              { backgroundColor: glassTokens.bg },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: "rgba(255,255,255,0.04)",
+                height: "55%",
+                borderTopLeftRadius: glassTokens.radius,
+                borderTopRightRadius: glassTokens.radius,
+              },
+            ]}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: "rgba(255,255,255,0.015)",
+                top: "55%",
+                height: "45%",
+                borderBottomLeftRadius: glassTokens.radius,
+                borderBottomRightRadius: glassTokens.radius,
+              },
+            ]}
+          />
+          {children}
+        </View>
       </BlurView>
     );
   }
@@ -66,7 +110,11 @@ export function ThemedView(
     "background",
   );
 
-  return <View style={[{ backgroundColor }, style]} {...otherProps} />;
+  return (
+    <View style={[{ backgroundColor }, style]} {...otherProps}>
+      {children}
+    </View>
+  );
 }
 
 const OUTER_STYLE_KEYS: Array<keyof ViewStyle> = [

@@ -40,7 +40,7 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarBackground: () => (
           <BlurView
-            intensity={40}
+            intensity={glass.blurIntensity}
             tint={scheme === "dark" ? "dark" : "light"}
             style={{
               flex: 1,

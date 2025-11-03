@@ -46,33 +46,31 @@ export default function MindsetScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[styles.panel, {
-            backgroundColor: palette.surface,
-            borderColor: palette.borderMuted,
-          }]}
-        >
+        {/* Liquid-glass group: see Colors.*.glass tokens */}
+        <ThemedView variant="glass" style={styles.panel}>
           <ThemedText type="subtitle">Identity Reinforcement Loop</ThemedText>
           <ThemedText style={styles.panelCopy}>
             The mindset system structures guided journaling, affirmations, and
             micro-habit feedback to keep identity front and center.
           </ThemedText>
-        </View>
+        </ThemedView>
 
         <ThemedText type="subtitle">Shortcuts</ThemedText>
         <View style={styles.shortcuts}>
           {shortcuts.map((shortcut) => (
             <Link key={shortcut.label} href={shortcut.href} asChild>
               <Pressable
-                style={[styles.shortcutCard, {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                }]}
+                style={({ pressed }) => [
+                  styles.glassPressable,
+                  pressed && { opacity: 0.95 },
+                ]}
               >
-                <ThemedText type="defaultSemiBold">{shortcut.label}</ThemedText>
-                <ThemedText style={styles.shortcutHint}>
-                  Tap to open prototype flow.
-                </ThemedText>
+                <ThemedView variant="glass" style={styles.shortcutCard}>
+                  <ThemedText type="defaultSemiBold">{shortcut.label}</ThemedText>
+                  <ThemedText style={styles.shortcutHint}>
+                    Tap to open prototype flow.
+                  </ThemedText>
+                </ThemedView>
               </Pressable>
             </Link>
           ))}
@@ -88,19 +86,14 @@ export default function MindsetScreen() {
 
         <View style={styles.ritualStack}>
           {rituals.map((item) => (
-            <View
+            <ThemedView
               key={item.title}
-              style={[
-                styles.ritualCard,
-                {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.borderMuted,
-                },
-              ]}
+              variant="glass"
+              style={styles.ritualCard}
             >
               <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
               <ThemedText style={styles.ritualDetail}>{item.detail}</ThemedText>
-            </View>
+            </ThemedView>
           ))}
         </View>
 
@@ -113,18 +106,13 @@ export default function MindsetScreen() {
 
         <View style={styles.backlog}>
           {backlog.map((task) => (
-            <View
+            <ThemedView
               key={task}
-              style={[
-                styles.backlogItem,
-                {
-                  backgroundColor: `${palette.tint}0D`,
-                  borderColor: `${palette.tint}33`,
-                },
-              ]}
+              variant="glass"
+              style={[styles.backlogItem, { borderLeftColor: palette.tint }]}
             >
               <ThemedText style={styles.backlogText}>{task}</ThemedText>
-            </View>
+            </ThemedView>
           ))}
         </View>
       </ScrollView>
@@ -139,8 +127,6 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   panel: {
-    borderRadius: 20,
-    borderWidth: 1,
     padding: 20,
     gap: 10,
   },
@@ -153,12 +139,14 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 14,
   },
-  shortcutCard: {
+  glassPressable: {
     flexBasis: "47%",
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 24,
+  },
+  shortcutCard: {
     padding: 16,
     gap: 6,
+    width: "100%",
   },
   shortcutHint: {
     fontSize: 13,
@@ -175,8 +163,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   ritualCard: {
-    borderRadius: 18,
-    borderWidth: 1,
     padding: 18,
     gap: 6,
   },
@@ -188,9 +174,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   backlogItem: {
-    borderRadius: 16,
-    borderWidth: 1,
     padding: 16,
+    borderLeftWidth: 3,
   },
   backlogText: {
     fontSize: 14,

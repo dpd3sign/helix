@@ -44,7 +44,7 @@ export default function MetricsOverviewScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        {/* Liquid-glass group: see Colors.*.glass tokens */}
         <ThemedView variant="glass" style={styles.hero}>
           <ThemedText type="subtitle">Metrics Dashboard</ThemedText>
           <ThemedText style={styles.heroCopy}>

@@ -175,7 +175,7 @@ export default function PlanOverviewScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Shared liquid-glass container (see Colors.*.glass tokens) */}
+        {/* Liquid-glass group: see Colors.*.glass tokens */}
         <ThemedView variant="glass" style={styles.selector}>
           <ThemedText type="subtitle">Plan Overview</ThemedText>
           {!plan && !loading
@@ -457,6 +457,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     alignItems: "center",
+    width: "100%",
   },
   viewText: {
     fontWeight: "600",
@@ -474,6 +475,7 @@ const styles = StyleSheet.create({
     padding: 18,
     gap: 12,
     alignItems: "flex-start",
+    width: "100%",
   },
   actionLabel: {
     fontWeight: "600",
