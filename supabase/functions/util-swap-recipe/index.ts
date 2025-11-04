@@ -36,11 +36,9 @@ type SwapRecipeResponse = {
 function isRecord(x: unknown): x is Record<string, unknown> {
   return !!x && typeof x === "object";
 }
-
 function isSupabaseClient(x: unknown): x is SupabaseClient {
   return !!x && typeof x === "object" && typeof (x as any).from === "function";
 }
-
 /** Coerce "null" string -> null; normalize unknown to string|null */
 function normalizeUuid(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -50,13 +48,12 @@ function normalizeUuid(value: unknown): string | null {
   const s = String(value).trim();
   return s.length ? s : null;
 }
-
+/** UUID-ish check (let Postgres enforce real UUID when non-null) */
 function looksLikeUuid(u: string | null): u is string {
   if (!u) return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     .test(u);
 }
-
 /** Accept common aliases for plan_day_id */
 function pickPlanDayId(raw: Record<string, unknown>): string | "" {
   const cands = [
@@ -78,7 +75,6 @@ async function fetchMealById(client: SupabaseClient, mealId: string) {
     .eq("id", mealId)
     .maybeSingle();
 }
-
 async function fetchMealByKeys(
   client: SupabaseClient,
   planDayId: string | "",
@@ -90,33 +86,22 @@ async function fetchMealByKeys(
     .select(
       "id, plan_day_id, name, meal_type, kcal, protein_g, carbs_g, fat_g, recipe_id",
     );
-
   if (planDayId) q = q.eq("plan_day_id", planDayId);
   q = fromRecipeId === null
     ? q.is("recipe_id", null)
     : q.eq("recipe_id", fromRecipeId);
   if (mealType && mealType.trim()) q = q.eq("meal_type", mealType.trim());
   if (!planDayId) q = q.order("created_at", { ascending: false });
-
   return await q.maybeSingle();
-}
-
-async function fetchRecipe(client: SupabaseClient, id: string | null) {
-  if (!id || !looksLikeUuid(id)) return { data: null, error: null };
-  return await client
-    .from("recipes")
-    .select("id, name, kcal, protein_g, carbs_g, fat_g, ingredients, diet_type")
-    .eq("id", id)
-    .maybeSingle();
 }
 
 /* ---------------- core handler ---------------- */
 
 /**
- * Flexible signature to satisfy tests and edge usage:
+ * Flexible signature:
  * - handleSwapRecipe(client, body)
- * - handleSwapRecipe(body)  // creates service client internally
- * - handleSwapRecipe(body, client) // old test style
+ * - handleSwapRecipe(body)
+ * - handleSwapRecipe(body, client)
  */
 export async function handleSwapRecipe(
   a: unknown,
@@ -126,15 +111,12 @@ export async function handleSwapRecipe(
   let body: unknown;
 
   if (isSupabaseClient(a)) {
-    // (client, body)
     client = a;
     body = b;
   } else if (isSupabaseClient(b)) {
-    // (body, client)
     client = b;
     body = a;
   } else {
-    // (body) only — construct a service client
     client = getServiceSupabaseClient({ persistSession: false });
     body = a;
   }
@@ -149,7 +131,7 @@ export async function handleSwapRecipe(
   const from_recipe_id = normalizeUuid(raw.from_recipe_id);
   const to_recipe_id = normalizeUuid(raw.to_recipe_id);
 
-  // 1) Locate the source meal by meal_id OR keys
+  // 1) Locate source meal
   let meal:
     | {
       id: string;
@@ -185,7 +167,6 @@ export async function handleSwapRecipe(
     }
     meal = data;
   }
-
   if (!meal) {
     return {
       ok: false,
@@ -194,30 +175,12 @@ export async function handleSwapRecipe(
     };
   }
 
-  // 2) Resolve new recipe (if provided)
-  let toRecipeName = "unchanged";
-  if (to_recipe_id !== null) {
-    const { data: r2, error: r2Err } = await fetchRecipe(client, to_recipe_id);
-    if (r2Err) {
-      return {
-        ok: false,
-        error: `Failed to fetch new recipe: ${r2Err.message}`,
-      };
-    }
-    if (!r2) {
-      return {
-        ok: false,
-        error: "to_recipe_id not found (or not a valid UUID).",
-      };
-    }
-    toRecipeName = r2.name ?? "new recipe";
-  }
-
+  // 2) Explanation (for audit/UX)
   const why = `Swapped recipe on meal "${meal.name ?? "Meal"}" ${
     from_recipe_id === null ? "(from NULL)" : `from ${meal.recipe_id}`
   } → ${to_recipe_id === null ? "(left unchanged)" : to_recipe_id}.`;
 
-  // 3) Update only when we have a real UUID target
+  // 3) Update only when we have a real UUID target; skip prefetch and trust FK
   const updatePayload: Record<string, unknown> = {};
   if (to_recipe_id !== null) {
     if (!looksLikeUuid(to_recipe_id)) {
@@ -230,11 +193,8 @@ export async function handleSwapRecipe(
   }
 
   if (Object.keys(updatePayload).length > 0) {
-    const { error: updErr } = await client
-      .from("meals")
-      .update(updatePayload)
+    const { error: updErr } = await client.from("meals").update(updatePayload)
       .eq("id", meal.id);
-
     if (updErr) return { ok: false, error: `Update failed: ${updErr.message}` };
   }
 
@@ -243,7 +203,7 @@ export async function handleSwapRecipe(
     await logPlanAudit(
       client,
       meal.plan_day_id,
-      `Swap recipe: ${meal.name ?? "Meal"} → ${toRecipeName}`,
+      `Swap recipe: ${meal.name ?? "Meal"} → ${to_recipe_id ?? "(unchanged)"}`,
       {
         type: "swap_recipe",
         plan_day_id: meal.plan_day_id,
@@ -254,16 +214,10 @@ export async function handleSwapRecipe(
       },
     );
   } catch {
-    // ignore audit failure
+    // don't block success on audit failure
   }
 
-  return {
-    ok: true,
-    meal_id: meal.id,
-    from_recipe_id,
-    to_recipe_id,
-    why,
-  };
+  return { ok: true, meal_id: meal.id, from_recipe_id, to_recipe_id, why };
 }
 
 /* ---------------- Edge entrypoint ---------------- */
@@ -284,8 +238,7 @@ serve(async (req: Request) => {
 
   try {
     const raw = await req.json().catch(() => ({}));
-    const client = getServiceSupabaseClient({ persistSession: false });
-    const result = await handleSwapRecipe(client, raw);
+    const result = await handleSwapRecipe(raw);
     return new Response(JSON.stringify(result), {
       status: result.ok ? 200 : 400,
       headers: corsHeaders,
