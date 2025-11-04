@@ -91,17 +91,28 @@ jobs:
           set -e
           supabase --version || true
 
-          # Try Supabase CLI first, then fall back to IPv4 psql apply if it fails
+          # Try CLI first
           if supabase migration up --db-url "$SUPABASE_DB_URL"; then
             echo "✅ Supabase CLI migrations applied"
           else
-            echo "⚠️ CLI failed to connect; falling back to psql-based migration apply"
+            echo "⚠️ CLI failed to connect; falling back to psql-based migration apply (IPv4 forced)"
 
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client dnsutils
+
+            # Extract original host
             DB_HOST="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql://[^@]+@([^/:]+).*#\1#')"
+
+            # First try: getent IPv4
             DB_HOST_IPV4="$(getent ahostsv4 "$DB_HOST" | awk 'NR==1{print $1}')"
 
+            # Second try: dig to Google DNS if empty
             if [ -z "$DB_HOST_IPV4" ]; then
-              echo "❌ Could not resolve IPv4 for $DB_HOST"
+              DB_HOST_IPV4="$(dig +short A $DB_HOST @8.8.8.8 | head -n1)"
+            fi
+
+            if [ -z "$DB_HOST_IPV4" ]; then
+              echo "❌ Could not resolve IPv4 for $DB_HOST via getent or dig"
               exit 1
             fi
 
@@ -113,10 +124,10 @@ jobs:
               echo "Applying $f"
               psql "$SUPABASE_DB_URL_IPV4" -v ON_ERROR_STOP=1 -f "$f"
             done
-            echo "✅ psql-based migration apply complete"
+            echo "✅ psql-based migration apply complete (IPv4)"
           fi
 
-          # Reload PostgREST schema cache
+          # Reload PostgREST schema cache (ignore failure)
           psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload';" || true
 
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
