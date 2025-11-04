@@ -36,7 +36,6 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      # Validate only (no install)
       - name: Format check (server code only)
         run: deno fmt --check supabase
 
@@ -51,8 +50,7 @@ jobs:
       DENO_NO_NPM: "1"
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}   # <-- add this line
-      PGOPTIONS: "-c listen_addresses='*'"
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,69 +68,57 @@ jobs:
             ~/.cache/deno
           key: deno-${{ runner.os }}-${{ steps.deno-setup.outputs.deno-version }}-${{ hashFiles('**/deno.lock', 'deno.json', 'deno.jsonc') }}
           restore-keys: |
-            deno-${{ runner.os }}-       
-    
-      # --- Setup Supabase CLI the reliable way ---
+            deno-${{ runner.os }}-
+
       - name: Setup Supabase CLI
         if: ${{ env.SUPABASE_DB_URL != '' }}
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
-     # --- Install psql client (used to NOTIFY PostgREST to reload schema) ---
       - name: Install psql client
         if: ${{ env.SUPABASE_DB_URL != '' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y postgresql-client dnsutils
           psql --version
-      
-      # --- Apply migrations to remote and reload PostgREST schema cache ---
+
       - name: Apply migrations to remote (if DB URL provided)
         if: ${{ env.SUPABASE_DB_URL != '' }}
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -e
-
-          # Show CLI version (not critical if migrations fall back to psql)
           supabase --version || true
 
-          # Try CLI first (fast path). If it can't connect (IPv6 issue), fall back to psql.
+          # Try Supabase CLI first, then fall back to IPv4 psql apply if it fails
           if supabase migration up --db-url "$SUPABASE_DB_URL"; then
             echo "✅ Supabase CLI migrations applied"
           else
             echo "⚠️ CLI failed to connect; falling back to psql-based migration apply"
 
-            sudo apt-get update
-            sudo apt-get install -y postgresql-client dnsutils
-
-            # Extract host from URI and resolve an IPv4 address
             DB_HOST="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql://[^@]+@([^/:]+).*#\1#')"
             DB_HOST_IPV4="$(getent ahostsv4 "$DB_HOST" | awk 'NR==1{print $1}')"
 
             if [ -z "$DB_HOST_IPV4" ]; then
-             echo "❌ Could not resolve IPv4 for $DB_HOST"
-             exit 1
-           fi
+              echo "❌ Could not resolve IPv4 for $DB_HOST"
+              exit 1
+            fi
 
-           echo "Using IPv4 $DB_HOST_IPV4 for $DB_HOST"
+            echo "Using IPv4 $DB_HOST_IPV4 for $DB_HOST"
+            SUPABASE_DB_URL_IPV4="$(echo "$SUPABASE_DB_URL" | sed -E "s#$DB_HOST#$DB_HOST_IPV4#")"
 
-           # Build an IPv4-only URI by replacing the host
-           SUPABASE_DB_URL_IPV4="$(echo "$SUPABASE_DB_URL" | sed -E "s#$DB_HOST#$DB_HOST_IPV4#")"
+            shopt -s nullglob
+            for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
+              echo "Applying $f"
+              psql "$SUPABASE_DB_URL_IPV4" -v ON_ERROR_STOP=1 -f "$f"
+            done
+            echo "✅ psql-based migration apply complete"
+          fi
 
-           # Apply every .sql file in your migrations, in order
-           shopt -s nullglob
-           for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
-             echo "Applying $f"
-             psql "$SUPABASE_DB_URL_IPV4" -v ON_ERROR_STOP=1 -f "$f"
-           done
-           echo "✅ psql-based migration apply complete"
-         fi
+          # Reload PostgREST schema cache
+          psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload';" || true
 
-         # Reload PostgREST schema cache so new tables/functions are visible immediately
-         psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload';" || true
- 
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
