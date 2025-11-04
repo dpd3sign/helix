@@ -65,7 +65,21 @@ jobs:
           key: deno-${{ runner.os }}-${{ steps.deno-setup.outputs.deno-version }}-${{ hashFiles('**/deno.lock', 'deno.json', 'deno.jsonc') }}
           restore-keys: |
             deno-${{ runner.os }}-
-
+            
+      - name: Install Supabase CLI
+        if: ${{ env.SUPABASE_DB_URL != '' }}
+        run: |
+          curl -fsSL https://cli.supabase.com/install | sh
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+      
+      - name: Apply migrations to remote (if DB URL provided)
+        if: ${{ env.SUPABASE_DB_URL != '' }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          supabase migration up --db-url "$SUPABASE_DB_URL"
+          supabase db execute --db-url "$SUPABASE_DB_URL" --query "NOTIFY pgrst, 'reload schema';"
+        
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
