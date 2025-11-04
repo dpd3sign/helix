@@ -94,17 +94,32 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -e
-          supabase --version
-          # Retry CLI once in case of transient network
-          supabase migration up --db-url "$SUPABASE_DB_URL" || (sleep 5 && supabase migration up --db-url "$SUPABASE_DB_URL")
 
-          # Install psql client if not already present (idempotent)
-          command -v psql >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y postgresql-client; }
+          # print CLI version (ok if it fails; we fall back to psql anyway)
+          supabase --version || true
 
-          # Force IPv4 for NOTIFY to avoid IPv6 dial errors on GitHub runners
-          PGPASSWORD="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql:\/\/postgres:([^@]+)@.*$#\1#')" \
-            psql -4 "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';"
-     
+          # Try CLI first (fast path). If it can't connect (IPv6 issue), fall back to psql.
+          if supabase migration up --db-url "$SUPABASE_DB_URL"; then
+          echo "✅ Supabase CLI migrations applied"
+          else
+            echo "⚠️ CLI failed to connect; falling back to psql-based migration apply"
+
+            # Ensure psql is available
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+
+            # Apply every .sql file in your migrations, in order, via IPv4
+            shopt -s nullglob
+            for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
+              echo "Applying $f"
+              psql -4 "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
+            done
+            echo "✅ psql-based migration apply complete"
+          fi
+
+          # Reload PostgREST schema cache so new tables/functions are visible immediately
+          psql -4 "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';" || true
+
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
