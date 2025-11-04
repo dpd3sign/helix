@@ -183,11 +183,8 @@ export async function handleSwapRecipe(
   // 3) Update only when we have a real UUID target; skip prefetch and trust FK
   const updatePayload: Record<string, unknown> = {};
   if (to_recipe_id !== null) {
-    if (!looksLikeUuid(to_recipe_id)) {
-      return {
-        ok: false,
-        error: `Invalid to_recipe_id format (received "${to_recipe_id}")`,
-      };
+    // trust the value; Postgres FK will enforce validity
+    updatePayload.recipe_id = to_recipe_id;
     }
     updatePayload.recipe_id = to_recipe_id;
   }
