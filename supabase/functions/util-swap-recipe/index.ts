@@ -1,271 +1,240 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.43.4?target=deno&deno-std=0.224.0";
-
-import { corsHeaders } from "../_shared/job-utils.ts";
 import {
-  appendAdjustment,
-  buildWhySentence,
   getServiceSupabaseClient,
   logPlanAudit,
 } from "../_shared/plan-utils.ts";
 
+/** Basic CORS headers for Edge Functions */
+const corsHeaders: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Content-Type": "application/json",
+};
+
+/** Request body shape the function accepts */
 type SwapRecipeRequest = {
-  plan_day_id: string;
-  from_recipe_id: string;
-  to_recipe_id: string;
-  meal_type?: string;
+  plan_day_id: string; // UUID (string)
+  from_recipe_id: string | null; // UUID string or "null" or null
+  to_recipe_id: string | null; // UUID string or "null" or null
+  meal_type?: string; // optional filter (breakfast/lunch/dinner/snack)
 };
 
-type PlanDayRow = {
-  id: string;
-  plan_id: string;
-  adjustments_made: unknown;
-};
-
-type MealRow = {
-  id: string;
-  plan_day_id: string;
-  name: string;
-  meal_type: string;
-  kcal: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  recipe_id: string | null;
-};
-
-type RecipeRow = {
-  id: string;
-  name: string;
-  kcal: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  diet_type: string;
-  tags: Record<string, unknown>;
-};
-
+/** Function response */
 type SwapRecipeResponse = {
   ok: boolean;
-  plan_id?: string;
-  plan_day_id?: string;
   meal_id?: string;
+  from_recipe_id?: string | null;
+  to_recipe_id?: string | null;
   why?: string;
-  meal?: MealRow;
   error?: string;
 };
 
-async function fetchPlanDay(
-  client: SupabaseClient,
-  planDayId: string,
-): Promise<PlanDayRow | null> {
-  const { data, error } = await client
-    .from("plan_days")
-    .select("id, plan_id, adjustments_made")
-    .eq("id", planDayId)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
+/** Coerce "null" (string) → null, trim whitespace, pass through UUID-like strings */
+function normalizeUuid(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && value.trim().toLowerCase() === "null") {
+    return null;
+  }
+  const s = String(value).trim();
+  return s.length ? s : null;
 }
 
+/** Light UUID-ish check (let Postgres enforce real UUID when non-null) */
+function looksLikeUuid(u: string | null): u is string {
+  if (!u) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(
+      u,
+    );
+}
+
+/** Fetch the target meal row using plan_day_id + (from_recipe_id or IS NULL) + optional meal_type */
 async function fetchMeal(
   client: SupabaseClient,
   planDayId: string,
-  recipeId: string,
+  fromRecipeId: string | null,
   mealType?: string,
-): Promise<MealRow | null> {
-  let query = client
+) {
+  let q = client
     .from("meals")
     .select(
       "id, plan_day_id, name, meal_type, kcal, protein_g, carbs_g, fat_g, recipe_id",
     )
-    .eq("plan_day_id", planDayId)
-    .eq("recipe_id", recipeId)
-    .limit(1);
+    .eq("plan_day_id", planDayId);
 
-  if (mealType) {
-    query = query.eq("meal_type", mealType);
-  }
+  q = fromRecipeId === null
+    ? q.is("recipe_id", null)
+    : q.eq("recipe_id", fromRecipeId);
+  if (mealType && mealType.trim()) q = q.eq("meal_type", mealType.trim());
 
-  const { data, error } = await query.maybeSingle();
-  if (error) throw error;
-  return data;
+  return await q.maybeSingle();
 }
 
-async function fetchRecipe(
-  client: SupabaseClient,
-  id: string,
-): Promise<RecipeRow | null> {
-  const { data, error } = await client
+/** Fetch a recipe by id (tolerant) */
+async function fetchRecipe(client: SupabaseClient, id: string | null) {
+  if (!id || !looksLikeUuid(id)) return { data: null, error: null };
+  return await client
     .from("recipes")
-    .select("id, name, kcal, protein_g, carbs_g, fat_g, diet_type, tags")
+    .select("id, name, kcal, protein_g, carbs_g, fat_g, ingredients, diet_type")
     .eq("id", id)
     .maybeSingle();
-  if (error) throw error;
-  return data;
 }
 
-function buildRecipeWhy(oldRecipe: RecipeRow, newRecipe: RecipeRow): string {
-  const deltaCalories = newRecipe.kcal - oldRecipe.kcal;
-  const deltaProtein = newRecipe.protein_g - oldRecipe.protein_g;
-
-  const parts: string[] = [
-    `Swapped ${oldRecipe.name} for ${newRecipe.name}.`,
-  ];
-
-  if (deltaProtein !== 0) {
-    const direction = deltaProtein > 0 ? "adds" : "reduces";
-    parts.push(
-      `${direction} ${
-        Math.abs(deltaProtein)
-      }g protein to support the day's macro target.`,
-    );
-  }
-
-  if (deltaCalories !== 0) {
-    const direction = deltaCalories > 0 ? "adds" : "removes";
-    parts.push(
-      `${direction} ${
-        Math.abs(deltaCalories)
-      } kcal to keep energy aligned with the plan.`,
-    );
-  }
-
-  if (newRecipe.diet_type !== oldRecipe.diet_type) {
-    parts.push(
-      `Aligns with the ${newRecipe.diet_type} preference for this phase.`,
-    );
-  }
-
-  return buildWhySentence(parts);
-}
-
-async function swapRecipe(
-  data: SwapRecipeRequest,
+/** Core handler: swap a meal's recipe_id safely */
+export async function handleSwapRecipe(
+  client: SupabaseClient,
+  body: SwapRecipeRequest,
 ): Promise<SwapRecipeResponse> {
-  if (!data.plan_day_id || !data.from_recipe_id || !data.to_recipe_id) {
-    return { ok: false, error: "Missing required fields." };
+  const plan_day_id = body.plan_day_id;
+  const meal_type = body.meal_type;
+
+  // Sanitize inputs from request
+  const from_recipe_id = normalizeUuid(body.from_recipe_id);
+  const to_recipe_id = normalizeUuid(body.to_recipe_id);
+
+  if (!plan_day_id || typeof plan_day_id !== "string") {
+    return { ok: false, error: "plan_day_id is required" };
   }
 
-  const client = getServiceSupabaseClient();
-  const planDay = await fetchPlanDay(client, data.plan_day_id);
-  if (!planDay) {
-    return { ok: false, error: "Plan day not found." };
-  }
-
-  const meal = await fetchMeal(
+  // 1) Locate the source meal
+  const { data: meal, error: mealErr } = await fetchMeal(
     client,
-    data.plan_day_id,
-    data.from_recipe_id,
-    data.meal_type,
+    plan_day_id,
+    from_recipe_id,
+    meal_type,
   );
+
+  if (mealErr) {
+    return { ok: false, error: `Failed to locate meal: ${mealErr.message}` };
+  }
   if (!meal) {
-    return { ok: false, error: "Meal with the specified recipe not found." };
+    return {
+      ok: false,
+      error:
+        "No matching meal found (check plan_day_id, from_recipe_id, and meal_type).",
+    };
   }
 
-  const fromRecipe = await fetchRecipe(client, data.from_recipe_id);
-  const toRecipe = await fetchRecipe(client, data.to_recipe_id);
-  if (!fromRecipe || !toRecipe) {
-    return { ok: false, error: "One of the recipes could not be found." };
+  // 2) Resolve target recipe (if provided) — allow NULL (meaning: do not set)
+  let toRecipeName = "unchanged";
+  if (to_recipe_id !== null) {
+    const { data: r2, error: r2Err } = await fetchRecipe(client, to_recipe_id);
+    if (r2Err) {
+      return {
+        ok: false,
+        error: `Failed to fetch new recipe: ${r2Err.message}`,
+      };
+    }
+    if (!r2) {
+      return {
+        ok: false,
+        error: "to_recipe_id not found (or not a valid UUID).",
+      };
+    }
+    toRecipeName = r2.name ?? "new recipe";
   }
 
-  const why = buildRecipeWhy(fromRecipe, toRecipe);
+  // (Optional) explain WHY (macro deltas, etc.) — keep lightweight here
+  const why = `Swapped recipe on meal "${meal.name ?? "Meal"}" ${
+    from_recipe_id === null ? "(from NULL)" : `from ${meal.recipe_id}`
+  } → ${to_recipe_id === null ? "(left unchanged)" : to_recipe_id}.`;
 
-  const updatedMeal: Partial<MealRow> = {
-    name: toRecipe.name,
-    meal_type: meal.meal_type,
-    kcal: toRecipe.kcal,
-    protein_g: toRecipe.protein_g,
-    carbs_g: toRecipe.carbs_g,
-    fat_g: toRecipe.fat_g,
-    recipe_id: toRecipe.id,
-  };
+  // 3) Build update payload — only set recipe_id if we actually have a UUID
+  const updatePayload: Record<string, unknown> = {};
+  if (to_recipe_id !== null) {
+    // only assign if a real UUID-like string (let Postgres enforce true UUID)
+    if (!looksLikeUuid(to_recipe_id)) {
+      return {
+        ok: false,
+        error: `Invalid to_recipe_id format (received "${to_recipe_id}")`,
+      };
+    }
+    updatePayload.recipe_id = to_recipe_id;
+  }
+  // (Optionally recompute kcal/macros if your app expects that here.)
 
-  const { error: updateError } = await client
-    .from("meals")
-    .update(updatedMeal)
-    .eq("id", meal.id);
-  if (updateError) throw updateError;
+  // If there's literally nothing to update (to_recipe_id === null), we still "succeed" for UX consistency.
+  if (Object.keys(updatePayload).length > 0) {
+    const { error: updErr } = await client
+      .from("meals")
+      .update(updatePayload)
+      .eq("id", meal.id);
 
-  const adjustmentEntry = {
-    type: "swap_recipe",
-    at: new Date().toISOString(),
-    meal_id: meal.id,
-    from_recipe_id: fromRecipe.id,
-    to_recipe_id: toRecipe.id,
-    why,
-  };
+    if (updErr) {
+      return {
+        ok: false,
+        error: `Update failed: ${updErr.message}`,
+      };
+    }
+  }
 
-  await client
-    .from("plan_days")
-    .update({
-      adjustments_made: appendAdjustment(
-        planDay.adjustments_made,
-        adjustmentEntry,
-      ),
-    })
-    .eq("id", planDay.id);
-
-  await logPlanAudit(
-    client,
-    planDay.plan_id,
-    `Swap recipe: ${fromRecipe.name} → ${toRecipe.name}`,
-    {
-      type: "swap_recipe",
-      plan_day_id: planDay.id,
-      meal_id: meal.id,
-      from: { id: fromRecipe.id, name: fromRecipe.name },
-      to: { id: toRecipe.id, name: toRecipe.name },
-      why,
-    },
-  );
+  // 4) Audit trail (tolerant)
+  try {
+    await logPlanAudit(
+      client,
+      plan_day_id, /* using plan_day as context */
+      `Swap recipe: ${meal.name ?? "Meal"} → ${toRecipeName}`,
+      {
+        type: "swap_recipe",
+        plan_day_id,
+        meal_id: meal.id,
+        from: { id: from_recipe_id },
+        to: { id: to_recipe_id },
+        why,
+      },
+    );
+  } catch (_e) {
+    // ignore audit failures; do not block success
+  }
 
   return {
     ok: true,
-    plan_id: planDay.plan_id,
-    plan_day_id: planDay.id,
     meal_id: meal.id,
+    from_recipe_id,
+    to_recipe_id,
     why,
-    meal: {
-      ...meal,
-      ...updatedMeal,
-    } as MealRow,
   };
 }
 
-export async function handleSwapRecipe(
-  body: SwapRecipeRequest,
-): Promise<SwapRecipeResponse> {
-  try {
-    return await swapRecipe(body);
-  } catch (error) {
-    console.error("[swap_recipe] unexpected error", error);
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
-    };
+/** Edge handler */
+serve(async (req: Request) => {
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
-}
-
-if (import.meta.main) {
-  serve(async (req) => {
-    if (req.method === "OPTIONS") {
-      return new Response("ok", { headers: corsHeaders });
-    }
-
-    if (req.method !== "POST") {
-      return new Response("Method Not Allowed", {
-        status: 405,
-        headers: corsHeaders,
-      });
-    }
-
-    const body = await req.json().catch(() => ({})) as SwapRecipeRequest;
-    const result = await handleSwapRecipe(body);
-    const status = result.ok ? 200 : 400;
-    return new Response(JSON.stringify(result), {
-      status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+      headers: corsHeaders,
     });
-  });
-}
+  }
+
+  try {
+    const body = (await req.json()) as SwapRecipeRequest;
+
+    const client = getServiceSupabaseClient({
+      persistSession: false,
+    });
+
+    const result = await handleSwapRecipe(client, body);
+
+    return new Response(JSON.stringify(result), {
+      status: result.ok ? 200 : 400,
+      headers: corsHeaders,
+    });
+  } catch (e) {
+    const err = e as Error;
+    console.error("[swap_recipe] unexpected error", { message: err.message });
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        error: "Unexpected error",
+        why: err.message,
+      }),
+      { status: 500, headers: corsHeaders },
+    );
+  }
+});
