@@ -15,9 +15,10 @@ const corsHeaders: Record<string, string> = {
 };
 
 type SwapRecipeRequest = {
-  plan_day_id: string; // UUID string
-  from_recipe_id: string | null; // UUID or null or "null"
-  to_recipe_id: string | null; // UUID or null or "null"
+  plan_day_id?: string; // UUID string
+  meal_id?: string; // UUID string
+  from_recipe_id?: string | null; // UUID or null or "null"
+  to_recipe_id?: string | null; // UUID or null or "null"
   meal_type?: string;
 };
 
@@ -36,7 +37,6 @@ function isRecord(x: unknown): x is Record<string, unknown> {
   return !!x && typeof x === "object";
 }
 
-/** Coerce "null" string -> null; normalize unknown to string|null */
 function normalizeUuid(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string" && value.trim().toLowerCase() === "null") {
@@ -52,9 +52,33 @@ function looksLikeUuid(u: string | null): u is string {
     .test(u);
 }
 
-async function fetchMeal(
+/** Best-effort parse of plan_day_id across common aliases */
+function pickPlanDayId(raw: Record<string, unknown>): string | "" {
+  const cands = [
+    raw.plan_day_id,
+    (raw as any).planDayId,
+    (raw as any).plan_day,
+    (raw as any).planId,
+  ];
+  for (const v of cands) {
+    if (typeof v === "string" && v.trim().length) return v.trim();
+  }
+  return "";
+}
+
+async function fetchMealById(client: SupabaseClient, mealId: string) {
+  return await client
+    .from("meals")
+    .select(
+      "id, plan_day_id, name, meal_type, kcal, protein_g, carbs_g, fat_g, recipe_id",
+    )
+    .eq("id", mealId)
+    .maybeSingle();
+}
+
+async function fetchMealByKeys(
   client: SupabaseClient,
-  planDayId: string,
+  planDayId: string | "",
   fromRecipeId: string | null,
   mealType?: string,
 ) {
@@ -62,13 +86,16 @@ async function fetchMeal(
     .from("meals")
     .select(
       "id, plan_day_id, name, meal_type, kcal, protein_g, carbs_g, fat_g, recipe_id",
-    )
-    .eq("plan_day_id", planDayId);
+    );
 
+  if (planDayId) q = q.eq("plan_day_id", planDayId);
   q = fromRecipeId === null
     ? q.is("recipe_id", null)
     : q.eq("recipe_id", fromRecipeId);
   if (mealType && mealType.trim()) q = q.eq("meal_type", mealType.trim());
+
+  // If no plan_day_id was provided, take the most recent match
+  if (!planDayId) q = q.order("created_at", { ascending: false });
 
   return await q.maybeSingle();
 }
@@ -82,17 +109,17 @@ async function fetchRecipe(client: SupabaseClient, id: string | null) {
     .maybeSingle();
 }
 
-/* ---------------- core handler (used by tests) ---------------- */
+/* ---------------- core handler ---------------- */
 
 export async function handleSwapRecipe(
   client: SupabaseClient,
-  body: unknown, // make tolerant: tests may pass undefined in some paths
+  body: unknown,
 ): Promise<SwapRecipeResponse> {
-  // Defensive parse of body
   const raw = isRecord(body) ? body : {};
-  const plan_day_id = typeof raw.plan_day_id === "string"
-    ? raw.plan_day_id
-    : "";
+
+  // Accept either plan_day_id (or aliases) OR meal_id
+  const meal_id = typeof raw.meal_id === "string" ? raw.meal_id.trim() : "";
+  const plan_day_id = pickPlanDayId(raw);
   const meal_type = typeof raw.meal_type === "string"
     ? raw.meal_type
     : undefined;
@@ -100,29 +127,52 @@ export async function handleSwapRecipe(
   const from_recipe_id = normalizeUuid(raw.from_recipe_id);
   const to_recipe_id = normalizeUuid(raw.to_recipe_id);
 
-  if (!plan_day_id) {
-    return { ok: false, error: "plan_day_id is required" };
+  // 1) Locate the source meal
+  let meal:
+    | {
+      id: string;
+      plan_day_id: string;
+      name: string | null;
+      meal_type: string | null;
+      kcal: number | null;
+      protein_g: number | null;
+      carbs_g: number | null;
+      fat_g: number | null;
+      recipe_id: string | null;
+    }
+    | null = null;
+
+  if (meal_id) {
+    const { data, error } = await fetchMealById(client, meal_id);
+    if (error) {
+      return {
+        ok: false,
+        error: `Failed to locate meal by id: ${error.message}`,
+      };
+    }
+    meal = data;
+  } else {
+    const { data, error } = await fetchMealByKeys(
+      client,
+      plan_day_id,
+      from_recipe_id,
+      meal_type,
+    );
+    if (error) {
+      return { ok: false, error: `Failed to locate meal: ${error.message}` };
+    }
+    meal = data;
   }
 
-  // 1) Locate the source meal
-  const { data: meal, error: mealErr } = await fetchMeal(
-    client,
-    plan_day_id,
-    from_recipe_id,
-    meal_type,
-  );
-  if (mealErr) {
-    return { ok: false, error: `Failed to locate meal: ${mealErr.message}` };
-  }
   if (!meal) {
     return {
       ok: false,
       error:
-        "No matching meal found (check plan_day_id, from_recipe_id, and meal_type).",
+        "No matching meal found (provide meal_id, or plan_day_id(+alias) with from_recipe_id and optional meal_type).",
     };
   }
 
-  // 2) Resolve the target recipe (if provided)
+  // 2) Resolve target recipe (if provided)
   let toRecipeName = "unchanged";
   if (to_recipe_id !== null) {
     const { data: r2, error: r2Err } = await fetchRecipe(client, to_recipe_id);
@@ -145,7 +195,7 @@ export async function handleSwapRecipe(
     from_recipe_id === null ? "(from NULL)" : `from ${meal.recipe_id}`
   } → ${to_recipe_id === null ? "(left unchanged)" : to_recipe_id}.`;
 
-  // 3) Build update payload; only set recipe_id if we have a valid UUID string
+  // 3) Build update payload
   const updatePayload: Record<string, unknown> = {};
   if (to_recipe_id !== null) {
     if (!looksLikeUuid(to_recipe_id)) {
@@ -158,23 +208,20 @@ export async function handleSwapRecipe(
   }
 
   if (Object.keys(updatePayload).length > 0) {
-    const { error: updErr } = await client
-      .from("meals")
-      .update(updatePayload)
+    const { error: updErr } = await client.from("meals").update(updatePayload)
       .eq("id", meal.id);
-
     if (updErr) return { ok: false, error: `Update failed: ${updErr.message}` };
   }
 
-  // 4) Audit (tolerant — don't fail success if audit write fails)
+  // 4) Audit (tolerant)
   try {
     await logPlanAudit(
       client,
-      plan_day_id,
+      meal.plan_day_id, // use the actual plan_day_id from the row we found
       `Swap recipe: ${meal.name ?? "Meal"} → ${toRecipeName}`,
       {
         type: "swap_recipe",
-        plan_day_id,
+        plan_day_id: meal.plan_day_id,
         meal_id: meal.id,
         from: { id: from_recipe_id },
         to: { id: to_recipe_id },
@@ -197,7 +244,6 @@ export async function handleSwapRecipe(
 /* ---------------- Edge entrypoint ---------------- */
 
 serve(async (req: Request) => {
-  // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
