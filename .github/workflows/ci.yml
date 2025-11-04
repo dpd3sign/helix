@@ -52,6 +52,7 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}   # <-- add this line
+      PGOPTIONS: "-c listen_addresses='*'"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,18 +86,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
           psql --version
-
+      
       # --- Apply migrations to remote and reload PostgREST schema cache ---
       - name: Apply migrations to remote (if DB URL provided)
         if: ${{ env.SUPABASE_DB_URL != '' }}
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
+          set -e
           supabase --version
-          supabase migration up --db-url "$SUPABASE_DB_URL"
+          # Retry CLI once in case of transient network
+          supabase migration up --db-url "$SUPABASE_DB_URL" || (sleep 5 && supabase migration up --db-url "$SUPABASE_DB_URL")
+
+          # Install psql client if not already present (idempotent)
+          command -v psql >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y postgresql-client; }
+
+          # Force IPv4 for NOTIFY to avoid IPv6 dial errors on GitHub runners
           PGPASSWORD="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql:\/\/postgres:([^@]+)@.*$#\1#')" \
-            psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';"
-      
+            psql -4 "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';"
+     
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
