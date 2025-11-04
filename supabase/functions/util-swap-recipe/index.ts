@@ -5,7 +5,7 @@ import {
   logPlanAudit,
 } from "../_shared/plan-utils.ts";
 
-/** Basic CORS headers for Edge Functions */
+/** CORS */
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -14,15 +14,13 @@ const corsHeaders: Record<string, string> = {
   "Content-Type": "application/json",
 };
 
-/** Request body shape the function accepts */
 type SwapRecipeRequest = {
-  plan_day_id: string; // UUID (string)
-  from_recipe_id: string | null; // UUID string or "null" or null
-  to_recipe_id: string | null; // UUID string or "null" or null
-  meal_type?: string; // optional filter (breakfast/lunch/dinner/snack)
+  plan_day_id: string; // UUID string
+  from_recipe_id: string | null; // UUID or null or "null"
+  to_recipe_id: string | null; // UUID or null or "null"
+  meal_type?: string;
 };
 
-/** Function response */
 type SwapRecipeResponse = {
   ok: boolean;
   meal_id?: string;
@@ -32,7 +30,13 @@ type SwapRecipeResponse = {
   error?: string;
 };
 
-/** Coerce "null" (string) → null, trim whitespace, pass through UUID-like strings */
+/* ---------------- helpers ---------------- */
+
+function isRecord(x: unknown): x is Record<string, unknown> {
+  return !!x && typeof x === "object";
+}
+
+/** Coerce "null" string -> null; normalize unknown to string|null */
 function normalizeUuid(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string" && value.trim().toLowerCase() === "null") {
@@ -42,16 +46,12 @@ function normalizeUuid(value: unknown): string | null {
   return s.length ? s : null;
 }
 
-/** Light UUID-ish check (let Postgres enforce real UUID when non-null) */
 function looksLikeUuid(u: string | null): u is string {
   if (!u) return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    .test(
-      u,
-    );
+    .test(u);
 }
 
-/** Fetch the target meal row using plan_day_id + (from_recipe_id or IS NULL) + optional meal_type */
 async function fetchMeal(
   client: SupabaseClient,
   planDayId: string,
@@ -73,7 +73,6 @@ async function fetchMeal(
   return await q.maybeSingle();
 }
 
-/** Fetch a recipe by id (tolerant) */
 async function fetchRecipe(client: SupabaseClient, id: string | null) {
   if (!id || !looksLikeUuid(id)) return { data: null, error: null };
   return await client
@@ -83,19 +82,25 @@ async function fetchRecipe(client: SupabaseClient, id: string | null) {
     .maybeSingle();
 }
 
-/** Core handler: swap a meal's recipe_id safely */
+/* ---------------- core handler (used by tests) ---------------- */
+
 export async function handleSwapRecipe(
   client: SupabaseClient,
-  body: SwapRecipeRequest,
+  body: unknown, // make tolerant: tests may pass undefined in some paths
 ): Promise<SwapRecipeResponse> {
-  const plan_day_id = body.plan_day_id;
-  const meal_type = body.meal_type;
+  // Defensive parse of body
+  const raw = isRecord(body) ? body : {};
+  const plan_day_id = typeof raw.plan_day_id === "string"
+    ? raw.plan_day_id
+    : "";
+  const meal_type = typeof raw.meal_type === "string"
+    ? raw.meal_type
+    : undefined;
 
-  // Sanitize inputs from request
-  const from_recipe_id = normalizeUuid(body.from_recipe_id);
-  const to_recipe_id = normalizeUuid(body.to_recipe_id);
+  const from_recipe_id = normalizeUuid(raw.from_recipe_id);
+  const to_recipe_id = normalizeUuid(raw.to_recipe_id);
 
-  if (!plan_day_id || typeof plan_day_id !== "string") {
+  if (!plan_day_id) {
     return { ok: false, error: "plan_day_id is required" };
   }
 
@@ -106,7 +111,6 @@ export async function handleSwapRecipe(
     from_recipe_id,
     meal_type,
   );
-
   if (mealErr) {
     return { ok: false, error: `Failed to locate meal: ${mealErr.message}` };
   }
@@ -118,7 +122,7 @@ export async function handleSwapRecipe(
     };
   }
 
-  // 2) Resolve target recipe (if provided) — allow NULL (meaning: do not set)
+  // 2) Resolve the target recipe (if provided)
   let toRecipeName = "unchanged";
   if (to_recipe_id !== null) {
     const { data: r2, error: r2Err } = await fetchRecipe(client, to_recipe_id);
@@ -137,15 +141,13 @@ export async function handleSwapRecipe(
     toRecipeName = r2.name ?? "new recipe";
   }
 
-  // (Optional) explain WHY (macro deltas, etc.) — keep lightweight here
   const why = `Swapped recipe on meal "${meal.name ?? "Meal"}" ${
     from_recipe_id === null ? "(from NULL)" : `from ${meal.recipe_id}`
   } → ${to_recipe_id === null ? "(left unchanged)" : to_recipe_id}.`;
 
-  // 3) Build update payload — only set recipe_id if we actually have a UUID
+  // 3) Build update payload; only set recipe_id if we have a valid UUID string
   const updatePayload: Record<string, unknown> = {};
   if (to_recipe_id !== null) {
-    // only assign if a real UUID-like string (let Postgres enforce true UUID)
     if (!looksLikeUuid(to_recipe_id)) {
       return {
         ok: false,
@@ -154,28 +156,21 @@ export async function handleSwapRecipe(
     }
     updatePayload.recipe_id = to_recipe_id;
   }
-  // (Optionally recompute kcal/macros if your app expects that here.)
 
-  // If there's literally nothing to update (to_recipe_id === null), we still "succeed" for UX consistency.
   if (Object.keys(updatePayload).length > 0) {
     const { error: updErr } = await client
       .from("meals")
       .update(updatePayload)
       .eq("id", meal.id);
 
-    if (updErr) {
-      return {
-        ok: false,
-        error: `Update failed: ${updErr.message}`,
-      };
-    }
+    if (updErr) return { ok: false, error: `Update failed: ${updErr.message}` };
   }
 
-  // 4) Audit trail (tolerant)
+  // 4) Audit (tolerant — don't fail success if audit write fails)
   try {
     await logPlanAudit(
       client,
-      plan_day_id, /* using plan_day as context */
+      plan_day_id,
       `Swap recipe: ${meal.name ?? "Meal"} → ${toRecipeName}`,
       {
         type: "swap_recipe",
@@ -186,8 +181,8 @@ export async function handleSwapRecipe(
         why,
       },
     );
-  } catch (_e) {
-    // ignore audit failures; do not block success
+  } catch {
+    // ignore audit failure
   }
 
   return {
@@ -199,28 +194,27 @@ export async function handleSwapRecipe(
   };
 }
 
-/** Edge handler */
+/* ---------------- Edge entrypoint ---------------- */
+
 serve(async (req: Request) => {
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: corsHeaders,
-    });
+    return new Response(
+      JSON.stringify({ ok: false, error: "Method Not Allowed" }),
+      {
+        status: 405,
+        headers: corsHeaders,
+      },
+    );
   }
 
   try {
-    const body = (await req.json()) as SwapRecipeRequest;
-
-    const client = getServiceSupabaseClient({
-      persistSession: false,
-    });
-
-    const result = await handleSwapRecipe(client, body);
-
+    const raw = await req.json().catch(() => ({}));
+    const client = getServiceSupabaseClient({ persistSession: false });
+    const result = await handleSwapRecipe(client, raw);
     return new Response(JSON.stringify(result), {
       status: result.ok ? 200 : 400,
       headers: corsHeaders,
