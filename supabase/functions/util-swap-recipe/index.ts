@@ -185,8 +185,6 @@ export async function handleSwapRecipe(
   if (to_recipe_id !== null) {
     // trust the value; Postgres FK will enforce validity
     updatePayload.recipe_id = to_recipe_id;
-    }
-    updatePayload.recipe_id = to_recipe_id;
   }
 
   if (Object.keys(updatePayload).length > 0) {
