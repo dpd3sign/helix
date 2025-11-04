@@ -78,8 +78,10 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           supabase migration up --db-url "$SUPABASE_DB_URL"
-          supabase db execute --db-url "$SUPABASE_DB_URL" --query "NOTIFY pgrst, 'reload schema';"
-        
+          # PostgREST reload: use psql, not CLI
+          PGPASSWORD="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql:\/\/postgres:([^@]+)@.*$#\1#')" \
+            psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';"
+      
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
