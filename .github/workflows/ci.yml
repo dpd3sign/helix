@@ -51,6 +51,7 @@ jobs:
       DENO_NO_NPM: "1"
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}   # <-- add this line
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,12 +86,6 @@ jobs:
           sudo apt-get install -y postgresql-client
           psql --version
 
-      - name: Setup Supabase CLI
-        if: ${{ env.SUPABASE_DB_URL != '' }}
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
       # --- Apply migrations to remote and reload PostgREST schema cache ---
       - name: Apply migrations to remote (if DB URL provided)
         if: ${{ env.SUPABASE_DB_URL != '' }}
@@ -99,8 +94,6 @@ jobs:
         run: |
           supabase --version
           supabase migration up --db-url "$SUPABASE_DB_URL"
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
           PGPASSWORD="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql:\/\/postgres:([^@]+)@.*$#\1#')" \
             psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';"
       
