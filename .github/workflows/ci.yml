@@ -16,7 +16,6 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,65 +69,8 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-
 
-      - name: Setup Supabase CLI
-        if: ${{ env.SUPABASE_DB_URL != '' }}
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Install psql client
-        if: ${{ env.SUPABASE_DB_URL != '' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client dnsutils
-          psql --version
-
-      - name: Apply migrations to remote (if DB URL provided)
-        if: ${{ env.SUPABASE_DB_URL != '' }}
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          set -e
-          supabase --version || true
-
-          # Try CLI first
-          if supabase migration up --db-url "$SUPABASE_DB_URL"; then
-            echo "✅ Supabase CLI migrations applied"
-          else
-            echo "⚠️ CLI failed to connect; falling back to psql-based migration apply (IPv4 forced)"
-
-            sudo apt-get update
-            sudo apt-get install -y postgresql-client dnsutils
-
-            # Extract original host
-            DB_HOST="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql://[^@]+@([^/:]+).*#\1#')"
-
-            # First try: getent IPv4
-            DB_HOST_IPV4="$(getent ahostsv4 "$DB_HOST" | awk 'NR==1{print $1}')"
-
-            # Second try: dig to Google DNS if empty
-            if [ -z "$DB_HOST_IPV4" ]; then
-              DB_HOST_IPV4="$(dig +short A $DB_HOST @8.8.8.8 | head -n1)"
-            fi
-
-            if [ -z "$DB_HOST_IPV4" ]; then
-              echo "❌ Could not resolve IPv4 for $DB_HOST via getent or dig"
-              exit 1
-            fi
-
-            echo "Using IPv4 $DB_HOST_IPV4 for $DB_HOST"
-            SUPABASE_DB_URL_IPV4="$(echo "$SUPABASE_DB_URL" | sed -E "s#$DB_HOST#$DB_HOST_IPV4#")"
-
-            shopt -s nullglob
-            for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
-              echo "Applying $f"
-              psql "$SUPABASE_DB_URL_IPV4" -v ON_ERROR_STOP=1 -f "$f"
-            done
-            echo "✅ psql-based migration apply complete (IPv4)"
-          fi
-
-          # Reload PostgREST schema cache (ignore failure)
-          psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload';" || true
+      # NOTE: Remote DB migrations are skipped in main CI to avoid IPv6 issues on hosted runners.
+      # Use the manual workflow ".github/workflows/migrate.yml" to apply schema changes.
 
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
