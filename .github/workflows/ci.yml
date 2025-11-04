@@ -70,13 +70,14 @@ jobs:
           restore-keys: |
             deno-${{ runner.os }}-       
     
-      - name: Install Supabase CLI
+      # --- Setup Supabase CLI the reliable way ---
+      - name: Setup Supabase CLI
         if: ${{ env.SUPABASE_DB_URL != '' }}
-        run: |
-          curl -fsSL https://cli.supabase.com/install | sh
-          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
-          $HOME/.supabase/bin/supabase --version
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
+     # --- Install psql client (used to NOTIFY PostgREST to reload schema) ---
       - name: Install psql client
         if: ${{ env.SUPABASE_DB_URL != '' }}
         run: |
@@ -84,17 +85,18 @@ jobs:
           sudo apt-get install -y postgresql-client
           psql --version
 
+      # --- Apply migrations to remote and reload PostgREST schema cache ---
       - name: Apply migrations to remote (if DB URL provided)
         if: ${{ env.SUPABASE_DB_URL != '' }}
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           # apply migrations to your cloud DB
-          $HOME/.supabase/bin/supabase migration up --db-url "$SUPABASE_DB_URL"
+          supabase migration up --db-url "$SUPABASE_DB_URL"
           # force PostgREST to reload its schema cache so new tables/functions are visible
           PGPASSWORD="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql:\/\/postgres:([^@]+)@.*$#\1#')" \
             psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';"
-      
+
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
