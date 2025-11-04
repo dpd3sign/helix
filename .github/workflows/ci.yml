@@ -95,31 +95,44 @@ jobs:
         run: |
           set -e
 
-          # print CLI version (ok if it fails; we fall back to psql anyway)
+          # Show CLI version (not critical if migrations fall back to psql)
           supabase --version || true
 
           # Try CLI first (fast path). If it can't connect (IPv6 issue), fall back to psql.
           if supabase migration up --db-url "$SUPABASE_DB_URL"; then
-          echo "✅ Supabase CLI migrations applied"
+            echo "✅ Supabase CLI migrations applied"
           else
             echo "⚠️ CLI failed to connect; falling back to psql-based migration apply"
 
-            # Ensure psql is available
             sudo apt-get update
-            sudo apt-get install -y postgresql-client
+            sudo apt-get install -y postgresql-client dnsutils
 
-            # Apply every .sql file in your migrations, in order, via IPv4
-            shopt -s nullglob
-            for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
-              echo "Applying $f"
-              psql -4 "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
-            done
-            echo "✅ psql-based migration apply complete"
-          fi
+            # Extract host from URI and resolve an IPv4 address
+            DB_HOST="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql://[^@]+@([^/:]+).*#\1#')"
+            DB_HOST_IPV4="$(getent ahostsv4 "$DB_HOST" | awk 'NR==1{print $1}')"
 
-          # Reload PostgREST schema cache so new tables/functions are visible immediately
-          psql -4 "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload schema';" || true
+            if [ -z "$DB_HOST_IPV4" ]; then
+             echo "❌ Could not resolve IPv4 for $DB_HOST"
+             exit 1
+           fi
 
+           echo "Using IPv4 $DB_HOST_IPV4 for $DB_HOST"
+
+           # Build an IPv4-only URI by replacing the host
+           SUPABASE_DB_URL_IPV4="$(echo "$SUPABASE_DB_URL" | sed -E "s#$DB_HOST#$DB_HOST_IPV4#")"
+
+           # Apply every .sql file in your migrations, in order
+           shopt -s nullglob
+           for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
+             echo "Applying $f"
+             psql "$SUPABASE_DB_URL_IPV4" -v ON_ERROR_STOP=1 -f "$f"
+           done
+           echo "✅ psql-based migration apply complete"
+         fi
+
+         # Reload PostgREST schema cache so new tables/functions are visible immediately
+         psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload';" || true
+ 
       - name: Pre-warm test deps (no-run, CI config, no npm, no typecheck)
         shell: bash
         run: |
