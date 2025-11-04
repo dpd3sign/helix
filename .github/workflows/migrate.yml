@@ -1,0 +1,51 @@
+name: Run Supabase Migrations (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client dnsutils
+          psql --version
+
+      - name: Apply migrations (CLI first, then psql as fallback)
+        run: |
+          set -e
+          echo "$SUPABASE_DB_URL" | sed -E 's#postgresql://([^:]+):([^@]+)@([^/]+)/.*#host=\3 user=\1 dburl=#' >/dev/null || true
+
+          if supabase migration up --db-url "$SUPABASE_DB_URL"; then
+            echo "✅ Supabase CLI migrations applied"
+          else
+            echo "⚠️ CLI failed; trying psql fallback with IPv4"
+            DB_HOST="$(echo "$SUPABASE_DB_URL" | sed -E 's#^postgresql://[^@]+@([^/:]+).*#\1#')"
+            DB_HOST_IPV4="$(dig +short A $DB_HOST @8.8.8.8 | head -n1)"
+            if [ -z "$DB_HOST_IPV4" ]; then
+              echo "❌ Could not resolve IPv4 for $DB_HOST"
+              exit 1
+            fi
+            SUPABASE_DB_URL_IPV4="$(echo "$SUPABASE_DB_URL" | sed -E "s#$DB_HOST#$DB_HOST_IPV4#")"
+            shopt -s nullglob
+            for f in $(ls -1 supabase/migrations/*/*.sql | sort); do
+              echo "Applying $f"
+              psql "$SUPABASE_DB_URL_IPV4" -v ON_ERROR_STOP=1 -f "$f"
+            done
+          fi
+
+      - name: Reload PostgREST schema cache
+        run: |
+          psql "$SUPABASE_DB_URL" -c "NOTIFY pgrst, 'reload';" || true
